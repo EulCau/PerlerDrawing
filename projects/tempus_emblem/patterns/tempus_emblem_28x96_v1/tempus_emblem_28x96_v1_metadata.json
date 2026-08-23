@@ -1,0 +1,53 @@
+{
+  "input": "projects/tempus_emblem/masters/tempus_emblem_master_fitted_30x100.png",
+  "name": "tempus_emblem",
+  "title": "Tempus emblem v1",
+  "grid": [
+    100,
+    100
+  ],
+  "board_size": [
+    100,
+    100
+  ],
+  "boards": [
+    1,
+    1
+  ],
+  "palette_type": "MARD 221 v1 fixed reference colors",
+  "palette_source": "palettes/mard_221_v1.json",
+  "palette_codes": [
+    "A20",
+    "A26",
+    "B26",
+    "F15",
+    "G5",
+    "G6",
+    "G8",
+    "G14",
+    "H4",
+    "H15",
+    "M15"
+  ],
+  "color_count": 11,
+  "bead_count": 1570,
+  "empty_cells": 8430,
+  "alpha_threshold": 0.55,
+  "seed": 20260822,
+  "semantic_accents": {},
+  "structural_edits": {},
+  "artifact_id": "tempus_emblem_28x96_v1",
+  "version": "v1",
+  "footprint": [
+    28,
+    96
+  ],
+  "occupied_rows_one_based": [
+    3,
+    98
+  ],
+  "occupied_columns_one_based": [
+    37,
+    64
+  ]
+}

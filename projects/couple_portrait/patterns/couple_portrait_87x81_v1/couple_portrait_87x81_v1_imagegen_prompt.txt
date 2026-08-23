@@ -1,0 +1,19 @@
+Use case: identity-preserve
+Asset type: high-resolution clean master illustration for conversion into an 87 x 87 physical fuse-bead pattern
+Input images: Image 1 is the edit target. It contains two adults in a close head-and-shoulders selfie.
+
+Primary request: Redraw the two people as a polished, friendly cel-shaded cartoon illustration before any pixel-grid reduction. Preserve each person's recognizable facial identity, face shape, skin tone, hairstyle, glasses shape, gentle expression, head angle, relative position, and close pose. Keep both people looking toward the camera.
+
+Woman-specific edit: remove the single thin stray lock crossing the woman's forehead and remove any isolated flyaway hairs that would become one-cell strands. Keep her shoulder-length dark hair as a compact clean silhouette with a few broad locks. Move the gathered neckline of her dusty-pink blouse modestly downward by about 3-5 cm so more of her neck is visible and the neck appears longer. Keep the blouse fully covering the chest with no cleavage and preserve its dusty-pink color and loose fabric character.
+
+Man-specific edit: preserve his short dark hair and light shirt. Remove the bright green and white reflections from both eyeglass lenses while keeping the eyes and glasses clearly readable.
+
+Scene/backdrop: remove the entire night forest, trees, lights, wall, and all scenery. Place the isolated pair on a perfectly flat solid #00ff00 chroma-key background. The background must be one uniform color with no shadow, gradient, texture, reflection, floor, glow, or lighting variation. Do not use #00ff00 in either subject.
+
+Style/medium: clean cel-shaded cartoon portrait with smooth vector-like shapes, moderately bold dark outlines, large intentional color regions, and only 2-3 tonal steps for skin, hair, glasses, and clothing. Simplify facial shading, hair detail, blouse folds, shirt wrinkles, and glasses highlights. Keep eyes, mouths, noses, and glasses anatomically coherent and readable at small size.
+
+Composition/framing: square composition, both heads and upper torsos fully inside the canvas, centered as a pair, with clean separation from the background and a small margin around hair and shoulders.
+
+Constraints: change only the rendering style, background, specified stray hair, blouse neckline position, and lens reflections. Preserve identities, apparent ages, facial features, expressions, pose, body proportions, clothing colors, and glasses. No text, watermark, additional people, extra limbs, props, scenery, pixel art, mosaic, or bead texture.
+
+Avoid: photorealistic pores, individual thin hairs, busy fabric texture, noisy gradients, harsh flash glare, green spill, translucent edges, excessive shadows, exaggerated anime proportions.

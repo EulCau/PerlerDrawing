@@ -1,0 +1,60 @@
+{
+  "source_pattern": "projects/tempus_emblem/patterns/tempus_emblem_28x96_v1",
+  "grid": [
+    100,
+    100
+  ],
+  "board_size": [
+    100,
+    100
+  ],
+  "boards": [
+    1,
+    1
+  ],
+  "footprint": [
+    27,
+    96
+  ],
+  "occupied_rows_one_based": [
+    3,
+    98
+  ],
+  "occupied_columns_one_based": [
+    37,
+    63
+  ],
+  "symmetry_type": "vertical_axis",
+  "symmetry_axis_column_one_based": 50,
+  "palette_type": "MARD 221 v1 fixed reference colors",
+  "palette_source": "palettes/mard_221_v1.json",
+  "palette_codes": [
+    "A20",
+    "A26",
+    "F15",
+    "G5",
+    "G6",
+    "H4",
+    "H15",
+    "M15"
+  ],
+  "color_count": 8,
+  "bead_count": 1478,
+  "structural_edits": {
+    "exact_vertical_axis_mirror": true,
+    "removed_flame_outline_codes": [
+      "B26",
+      "G8",
+      "G14"
+    ],
+    "blade_centerline": {
+      "code": "M15",
+      "width_cells": 1,
+      "column_one_based": 50
+    }
+  },
+  "artifact_id": "tempus_emblem_27x96_v2",
+  "name": "tempus_emblem",
+  "version": "v2",
+  "title": "Tempus emblem v2"
+}

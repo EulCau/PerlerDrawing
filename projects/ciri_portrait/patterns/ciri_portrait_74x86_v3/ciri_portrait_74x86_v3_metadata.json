@@ -1,0 +1,105 @@
+{
+  "input": "projects/ciri_portrait/masters/ciri_portrait_simplified_master.png",
+  "grid": [
+    87,
+    87
+  ],
+  "board_size": [
+    29,
+    29
+  ],
+  "boards": [
+    3,
+    3
+  ],
+  "palette_type": "adaptive RGB reference colors; not brand-specific",
+  "color_count": 25,
+  "bead_count": 3848,
+  "empty_cells": 3721,
+  "alpha_threshold": 0.5,
+  "seed": 20260822,
+  "semantic_accents": {
+    "green_irises": {
+      "cells_one_based": [
+        [
+          27,
+          45
+        ],
+        [
+          27,
+          55
+        ]
+      ],
+      "rgb": [
+        126,
+        145,
+        92
+      ]
+    }
+  },
+  "structural_edits": {
+    "vertical_sword": {
+      "cleared_region_one_based": {
+        "rows": [
+          1,
+          43
+        ],
+        "columns": [
+          13,
+          25
+        ]
+      },
+      "blade_center_columns_one_based": [
+        21,
+        22
+      ],
+      "tip_row_one_based": 2,
+      "guard_rows_one_based": [
+        33,
+        35
+      ],
+      "handle_rows_one_based": [
+        36,
+        43
+      ]
+    },
+    "removed_detached_lower_left_hilt": {
+      "seed_one_based": [
+        82,
+        27
+      ],
+      "removed_cells": 33,
+      "bounding_box_one_based": {
+        "rows": [
+          82,
+          87
+        ],
+        "columns": [
+          23,
+          29
+        ]
+      }
+    },
+    "crisp_inner_outline": {
+      "connectivity": 4,
+      "outline_code": "P03",
+      "outlined_cells": 398
+    }
+  },
+  "artifact_id": "ciri_portrait_74x86_v3",
+  "name": "ciri_portrait",
+  "version": "v3",
+  "title": "Ciri portrait v3",
+  "footprint": [
+    74,
+    86
+  ],
+  "occupied_rows_one_based": [
+    2,
+    87
+  ],
+  "occupied_columns_one_based": [
+    5,
+    78
+  ]
+}

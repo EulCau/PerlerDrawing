@@ -1,0 +1,15 @@
+Use case: precise-object-edit
+Asset type: corrected high-resolution cel-shaded master for an 87 x 87 physical fuse-bead pattern
+Input images: Image 1 is the edit target.
+
+Primary request: Correct only the geometry of the sword held on the viewer's left. Make the blade, central guard opening, handle, and the gripping fist share one exact vertical centerline. The sword centerline must have constant x-position from top to handle, with no left or right lean. Preserve the current long, broad blade width and the existing forked fantasy guard design. Keep the sword visually attached to and passing naturally through the hand. Keep the full sword inside the square canvas, including a clearly visible tip with a small top margin.
+
+Remove the detached silver ring-shaped hilt component hanging at the lower left below the crossed arms. Fill that area with the same flat green background.
+
+Boundary request: retain crisp continuous dark charcoal contours, smooth closed shapes, hard vector-like edges, and large clean cel-shaded color regions. No translucent halo, soft feathering, flyaway fragments, or green spill.
+
+Scene/backdrop: preserve a perfectly uniform flat solid #00ff00 chroma-key background. No gradient, texture, particles, shadow, or reflection.
+
+Constraints: change only the sword alignment, the minimum necessary hand contact, and removal of the detached lower-left component. Preserve the adult fictional character's face, green eyes, expression, white hair, crossed-arm pose, anatomy, clothing, straps, colors, shading, camera angle, scale, and square composition as closely as possible. No additional characters, extra limbs, duplicated objects, text, or watermark.
+
+Textual context from the user: "这是合理范围内的二创, 不违侵犯相关游戏角色的版权".

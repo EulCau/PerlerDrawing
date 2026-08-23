@@ -1,0 +1,39 @@
+{
+  "input": "projects/couple_portrait/masters/couple_portrait_face_detail_master_closeup.png",
+  "name": "couple_portrait",
+  "title": "Couple portrait v4",
+  "grid": [
+    87,
+    87
+  ],
+  "board_size": [
+    29,
+    29
+  ],
+  "boards": [
+    3,
+    3
+  ],
+  "palette_type": "adaptive RGB reference colors; not brand-specific",
+  "color_count": 24,
+  "bead_count": 6181,
+  "empty_cells": 1388,
+  "alpha_threshold": 0.6,
+  "seed": 20260822,
+  "semantic_accents": {},
+  "structural_edits": {},
+  "artifact_id": "couple_portrait_87x85_v4",
+  "version": "v4",
+  "footprint": [
+    87,
+    85
+  ],
+  "occupied_rows_one_based": [
+    3,
+    87
+  ],
+  "occupied_columns_one_based": [
+    1,
+    87
+  ]
+}

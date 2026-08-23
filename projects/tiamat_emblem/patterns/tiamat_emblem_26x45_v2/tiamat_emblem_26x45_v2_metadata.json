@@ -1,0 +1,48 @@
+{
+  "input": "projects/tiamat_emblem/masters/tiamat_emblem_master_fitted.png",
+  "name": "tiamat_emblem",
+  "title": "Tiamat emblem v2",
+  "grid": [
+    50,
+    50
+  ],
+  "board_size": [
+    50,
+    50
+  ],
+  "boards": [
+    1,
+    1
+  ],
+  "palette_type": "MARD 221 v1 fixed reference colors",
+  "palette_source": "palettes/mard_221_v1.json",
+  "palette_codes": [
+    "F10",
+    "F11",
+    "F13",
+    "F23",
+    "G7",
+    "G20"
+  ],
+  "color_count": 6,
+  "bead_count": 642,
+  "empty_cells": 1858,
+  "alpha_threshold": 0.55,
+  "seed": 20260822,
+  "semantic_accents": {},
+  "structural_edits": {},
+  "artifact_id": "tiamat_emblem_26x45_v2",
+  "version": "v2",
+  "footprint": [
+    26,
+    45
+  ],
+  "occupied_rows_one_based": [
+    3,
+    47
+  ],
+  "occupied_columns_one_based": [
+    13,
+    38
+  ]
+}

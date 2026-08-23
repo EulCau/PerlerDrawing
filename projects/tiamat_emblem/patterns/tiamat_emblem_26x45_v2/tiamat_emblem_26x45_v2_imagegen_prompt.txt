@@ -1,0 +1,29 @@
+Prompt 1 - remove chain and simplify the object
+
+Use case: precise-object-edit
+Asset type: high-resolution simplified master illustration for conversion into a physical fuse-bead pattern no larger than 50 x 50 cells
+Input images: Image 1 is the sole edit target.
+
+Primary request: Preserve the distinctive rusted metal pendant or talisman and its five long claw-like lower prongs, but remove the entire metal chain from both sides. Keep the small centered attachment ring at the top, fully closed, clearly visible, and unattached to anything. Do not add a replacement chain, cord, hook, or connector.
+
+Style/medium: clean graphic cel-shaded object illustration with a strong readable silhouette, crisp dark-brown contours, broad intentional color regions, and only 5-7 total rusted-metal tones. Simplify the original noisy corrosion, scratches, speckles, reflections, and embossed decoration into a few large shapes. Preserve the aged copper-brown and dark iron-brown appearance, central warm rust-colored raised motif, five-pronged silhouette, and pointed claw tips. Keep each narrow prong thick enough to remain continuous at a 50 x 50 bead grid. Use hard-edged highlights and shadows, no soft gradients, no tiny isolated marks, and no photorealistic texture.
+
+Scene/backdrop: place the isolated object on a perfectly flat solid #00ff00 chroma-key background for removal. The background must be one uniform color with no shadows, gradients, texture, reflection, floor plane, or lighting variation. Do not use #00ff00 anywhere in the object.
+
+Composition/framing: square canvas. Center the full pendant vertically and horizontally. Keep the entire top ring and all five pointed ends fully inside the canvas. Make the object tall but leave a clear margin on every side. Do not rotate, tilt, bend, or asymmetrically distort it.
+
+Constraints: change only chain removal, rendering simplification, and necessary cleanup for a small fuse-bead pattern. Preserve the object's recognizable overall proportions, top ring, broad upper body, central elongated motif, five separate lower prongs, and original rusty brown palette. No text, watermark, chain fragments, extra rings, extra prongs, missing prongs, jewelry cord, bead texture, pixel art, mosaic, scenery, cast shadow, or glow.
+
+Avoid: black background, broken ring, chain entering the ring, thin disconnected tips, noisy rust speckles, blurry edges, soft shadows, excessive detail, metallic glare, cropped ends, changed silhouette.
+
+Prompt 2 - correct framing only
+
+Use case: precise-object-edit
+Asset type: corrected master illustration for a 50 x 50 fuse-bead pattern
+Input images: Image 1 is the sole edit target.
+
+Primary request: Change only the framing. Uniformly scale the entire existing pendant down to approximately 82-85 percent of its current size and center it on the same square canvas, so the complete top ring and every one of the five lower claw tips are fully visible with a generous flat green margin on all four sides. Restore the currently cropped bottom center claw tips exactly in the same style and geometry implied by the existing object.
+
+Scene/backdrop: extend the existing perfectly flat solid #00ff00 chroma-key background into all newly exposed space. Keep it uniform with no shadow, gradient, texture, or glow.
+
+Constraints: preserve the pendant design, exactly five lower prongs, complete top ring, symmetry, rust-brown palette, cel-shaded shapes, contour thickness, highlights, and all object details unchanged. Keep the chain absent. No chain, cord, hook, extra ring, extra prong, missing prong, cropped edge, text, watermark, bead texture, pixel art, shadow, or scenery.

@@ -1,0 +1,13 @@
+Use case: identity-preserve
+Asset type: clean high-resolution master illustration designed for later conversion into an 87 x 87 physical fuse-bead pattern
+Input images: Image 1 is the sole edit target.
+
+Primary request: Edit only the facial rendering of both people so their eyes, noses, mouths, and eyeglasses remain unmistakably readable after later reduction to an 87 x 87 bead grid. Do not pixelate or lower the resolution. Use crisp, deliberate, high-contrast cel-animation linework and compact contiguous color shapes instead of soft low-contrast shading.
+
+Facial feature requirements: make each eye a clear almond shape with a dark continuous upper lid, a simpler lower edge, a visible light sclera, and one compact dark iris/pupil; keep eye size natural and preserve gaze. Define each nose using a small number of connected medium-dark contour shapes for bridge, nostrils, and underside, rather than pale highlights. Define each mouth with a continuous dark separation line, readable corners, and only two broad lip tones; preserve the original gentle expressions. Make both pairs of round eyeglasses complete, continuous, visibly thicker dark-brown frames with an unbroken bridge and temples; keep the original frame geometry and eliminate all lens glare. At master resolution, essential feature strokes should be broad enough to survive downsampling, approximately 6-10 pixels wide, with no hairline strokes. Reduce facial shading to 2-3 clearly separated tonal steps and remove soft gradients around the features.
+
+Scene/backdrop: preserve the perfectly flat solid #00ff00 chroma-key background exactly, with no texture, shadow, gradient, reflection, or green spill. Do not use #00ff00 in the people.
+
+Constraints: preserve both recognizable identities, apparent ages, face shapes, skin tones, head angles, gaze, expressions, relative positions, body proportions, hairstyle silhouettes, removed stray hair, lowered blouse neckline, clothing colors, pose, square framing, and all non-facial content. Keep anatomy natural and friendly. Change only facial-feature clarity and necessary local face shading. No text, watermark, extra people, extra facial features, background objects, pixel art, mosaic, bead texture, photorealism, or exaggerated anime eyes.
+
+Avoid: faint facial marks, broken eyeglass rims, transparent frame segments, soft-focus features, glossy lens reflections, tiny isolated highlight dots, subtle gradients, overly detailed eyelashes, distorted glasses, changed identity, changed expression.

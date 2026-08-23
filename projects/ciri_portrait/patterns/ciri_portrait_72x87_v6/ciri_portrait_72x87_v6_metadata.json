@@ -1,0 +1,75 @@
+{
+  "input": "projects/ciri_portrait/masters/ciri_portrait_corrected_master_v5.png",
+  "grid": [
+    87,
+    87
+  ],
+  "board_size": [
+    29,
+    29
+  ],
+  "boards": [
+    3,
+    3
+  ],
+  "palette_type": "adaptive RGB reference colors; not brand-specific",
+  "color_count": 25,
+  "bead_count": 3816,
+  "empty_cells": 3753,
+  "alpha_threshold": 0.5,
+  "seed": 20260822,
+  "semantic_accents": {
+    "green_irises": {
+      "cells_one_based": [
+        [
+          27,
+          45
+        ],
+        [
+          27,
+          55
+        ]
+      ],
+      "rgb": [
+        126,
+        145,
+        92
+      ]
+    }
+  },
+  "structural_edits": {
+    "trimmed_left_blade_protrusion": {
+      "removed_cells": 21,
+      "rows_one_based": [
+        15,
+        35
+      ],
+      "column_one_based": 16,
+      "resulting_blade_columns_one_based": [
+        17,
+        21
+      ]
+    },
+    "crisp_inner_outline": {
+      "connectivity": 4,
+      "outline_code": "P04",
+      "outlined_cells": 385
+    }
+  },
+  "artifact_id": "ciri_portrait_72x87_v6",
+  "name": "ciri_portrait",
+  "version": "v6",
+  "title": "Ciri portrait v6",
+  "footprint": [
+    72,
+    87
+  ],
+  "occupied_rows_one_based": [
+    1,
+    87
+  ],
+  "occupied_columns_one_based": [
+    7,
+    78
+  ]
+}

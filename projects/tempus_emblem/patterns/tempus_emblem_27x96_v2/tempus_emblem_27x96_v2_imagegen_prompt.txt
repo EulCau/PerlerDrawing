@@ -1,0 +1,15 @@
+Use case: precise-object-edit
+Asset type: high-resolution simplified master illustration for conversion into a physical fuse-bead pattern placed on a 100 x 100 board, with the object itself no wider than 30 cells
+Input images: Image 1 is the sole edit target.
+
+Primary request: Redraw the exact tall ornamental sword-and-flame emblem as a clean, vertically aligned, symmetrical cel-shaded illustration before any grid reduction. Preserve the recognizable overall silhouette: the long central silver-gray blade and lower hilt, the crossguard, the small red triangular inset, the surrounding gold flame-shaped frame with all paired inward cutouts and pointed flame tips, the large upper central point, and the long lower central gold point.
+
+Simplification for a narrow bead pattern: replace blurry metal texture, scratches, pits, reflections, and gradients with large connected color regions. Use a maximum of 10-12 clearly separated tones: 3-4 gold tones, 3-4 steel-gray tones, 2 red tones, and one very dark outline tone. Use crisp hard edges and continuous contour bands. Make every narrow bridge, flame tip, blade edge, hilt segment, and crossguard arm thick enough to remain connected when the complete emblem is represented at approximately 28-30 cells wide and 96-98 cells tall. Keep the red triangular inset large and unmistakable.
+
+Scene/backdrop: place the isolated emblem on a perfectly flat solid #00ff00 chroma-key background for removal. The background must be one uniform color with no shadow, gradient, texture, reflection, floor plane, or lighting variation. Do not use #00ff00 anywhere in the emblem.
+
+Composition/framing: square canvas. Center the emblem exactly on the vertical axis. Keep it perfectly upright with no tilt or perspective. Scale it so its height is approximately 94-96 percent of the canvas and its maximum width is approximately 27-29 percent of the canvas. Leave a small but clear margin above the top point and below the bottom point. Keep every flame tip fully inside the canvas.
+
+Constraints: this is a reasonable transformative fan-art adaptation for a physical craft pattern. Change only the rendering simplification, background, and minor thickness adjustments needed for grid continuity. Preserve symmetry, proportions, flame-tier arrangement, blade placement, crossguard geometry, red inset, gold-and-silver palette, and pointed ends. No text, watermark, logo, extra ornament, missing flame tip, extra flame tip, asymmetry, added handle wrapping, chain, person, scenery, pixel art, mosaic, bead texture, cast shadow, or glow.
+
+Avoid: blurry edges, photorealistic scratches, tiny highlight specks, soft gradients, narrow disconnected one-pixel bridges, cropped tips, bent blade, tilted composition, overly wide proportions, altered crossguard, orange background.

@@ -25,14 +25,6 @@ build/
 dist/
 *.egg-info/
 
-# Generated image-conversion and Codex output
-/outputs/
-/generated/
-/artifacts/
-/projects/*/masters/
-/projects/*/patterns/
-/projects/*/archives/
-
 # Temporary and operating-system files
 *.log
 *.tmp
