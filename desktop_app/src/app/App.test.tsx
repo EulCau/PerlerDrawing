@@ -109,4 +109,32 @@ describe("application preferences", () => {
     expect(screen.getByText("单一文档快照 · 安全相对路径 · tar.gz")).toBeVisible();
     expect(screen.getByRole("button", { name: /选择位置并导出/ })).toBeDisabled();
   });
+
+  it("exposes advanced selection and symmetric drawing controls", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /新建空白图纸/ }));
+    await user.click(screen.getByRole("button", { name: "创建并进入编辑器" }));
+
+    expect(screen.getByRole("button", { name: "选区 (S)" })).toBeVisible();
+    const symmetry = screen.getByRole("combobox", { name: "对称绘制" });
+    await user.selectOptions(symmetry, "vertical");
+    expect(symmetry).toHaveValue("vertical");
+    expect(documentStore.getState().document?.symmetry.type).toBe("vertical");
+  });
+
+  it("opens board PDF and version comparison workflows", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /新建空白图纸/ }));
+    await user.click(screen.getByRole("button", { name: "创建并进入编辑器" }));
+
+    await user.click(screen.getByRole("button", { name: "打印 PDF" }));
+    expect(screen.getByRole("dialog", { name: "导出分页分板 PDF" })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "取消" }));
+
+    await user.click(screen.getByRole("button", { name: "版本比较" }));
+    expect(screen.getByRole("dialog", { name: "比较当前图纸与 CSV 版本" })).toBeVisible();
+    expect(screen.getByText("尚未选择参考版本")).toBeVisible();
+  });
 });

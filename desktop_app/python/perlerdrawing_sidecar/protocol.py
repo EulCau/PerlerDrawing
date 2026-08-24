@@ -8,7 +8,7 @@ import traceback
 from pathlib import Path
 from typing import IO, Any
 
-from .exporter import export_package
+from .exporter import export_board_pdf, export_package
 from .imaging import ConversionSettings, convert_image
 
 PROTOCOL_VERSION = 1
@@ -86,6 +86,12 @@ def handle_request(request: dict[str, Any], output: IO[str]) -> None:
             _read_path(payload, "working_dir"),
             progress,
             _read_optional_path(payload, "master_path"),
+        )
+    elif operation == "export_board_pdf":
+        result = export_board_pdf(
+            _read_path(payload, "snapshot_path"),
+            _read_path(payload, "pdf_path"),
+            progress,
         )
     else:
         raise ProtocolError("unsupported_operation", f"Unsupported operation: {operation}")

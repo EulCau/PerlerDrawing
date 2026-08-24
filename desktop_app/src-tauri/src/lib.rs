@@ -356,6 +356,48 @@ async fn run_export_job(
 }
 
 #[tauri::command]
+async fn run_pdf_export_job(
+    app: AppHandle,
+    state: State<'_, SidecarState>,
+    job_id: String,
+    pdf_path: String,
+    snapshot: Value,
+) -> Result<Value, SidecarFailure> {
+    validate_job_id(&job_id)?;
+    if !pdf_path.to_ascii_lowercase().ends_with(".pdf") {
+        return Err(SidecarFailure::new(
+            "invalid_pdf_path",
+            "Board print exports must use the .pdf extension.",
+        ));
+    }
+    let output_dir = create_clean_job_dir(&app, &job_id)?;
+    let snapshot_path = output_dir.join("snapshot.json");
+    fs::write(
+        &snapshot_path,
+        serde_json::to_vec(&snapshot)
+            .map_err(|error| SidecarFailure::new("invalid_snapshot", error.to_string()))?,
+    )
+    .map_err(|error| SidecarFailure::new("snapshot_write_failed", error.to_string()))?;
+    let request = json!({
+        "protocol_version": 1,
+        "job_id": job_id,
+        "operation": "export_board_pdf",
+        "payload": {
+            "snapshot_path": snapshot_path,
+            "pdf_path": PathBuf::from(pdf_path),
+        },
+    });
+    let jobs = Arc::clone(&state.jobs);
+    let app_handle = app.clone();
+    let task_job_id = job_id.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        run_sidecar(app_handle, jobs, task_job_id, request)
+    })
+    .await
+    .map_err(|error| SidecarFailure::new("task_join_failed", error.to_string()))?
+}
+
+#[tauri::command]
 fn cancel_sidecar_job(
     state: State<'_, SidecarState>,
     job_id: String,
@@ -407,6 +449,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             run_image_job,
             run_export_job,
+            run_pdf_export_job,
             cancel_sidecar_job,
             read_job_asset,
             codex::detect_codex_cli,

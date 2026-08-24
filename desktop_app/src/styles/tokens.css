@@ -1,6 +1,7 @@
 :root {
   --font-sans: Inter, "Noto Sans SC", "Microsoft YaHei UI", "Segoe UI", sans-serif;
   --font-display: Inter, "Noto Sans SC", "Microsoft YaHei UI", "Segoe UI", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
   --color-bg: #f7f7fb;
   --color-bg-elevated: rgba(255, 255, 255, 0.82);
@@ -18,6 +19,7 @@
   --color-success: #177653;
   --color-success-soft: #e2f5ec;
   --color-danger: #d4485c;
+  --color-warning: #a8670e;
   --color-focus: #6759d7;
   --color-grid: rgba(63, 61, 91, 0.1);
   --canvas-workspace: #e9e9f0;
@@ -69,6 +71,7 @@
   --color-success: #68d8ad;
   --color-success-soft: #203b33;
   --color-danger: #ff7b8f;
+  --color-warning: #f2bb5f;
   --color-focus: #b1a5ff;
   --color-grid: rgba(229, 225, 255, 0.09);
   --canvas-workspace: #181820;

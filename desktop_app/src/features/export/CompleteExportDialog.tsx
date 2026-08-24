@@ -147,6 +147,7 @@ export function CompleteExportDialog({ document, onClose }: CompleteExportDialog
               "metadata",
               "paletteFile",
               "tiles",
+              "pdf",
             ].map((item) => (
               <span key={item}>
                 <CheckIcon />

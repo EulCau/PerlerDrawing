@@ -16,6 +16,9 @@ from typing import Callable
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, PngImagePlugin
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase.pdfmetrics import stringWidth
+from reportlab.pdfgen import canvas as pdf_canvas
 
 ProgressCallback = Callable[[str, float, str], None]
 EMPTY_CELL = 65535
@@ -28,6 +31,7 @@ REQUIRED_SUFFIXES = (
     "_inventory.csv",
     "_metadata.json",
     "_palette.json",
+    "_boards.pdf",
 )
 
 
@@ -261,6 +265,168 @@ def _render_tiles(
     return row_count * column_count
 
 
+def _render_board_pdf(
+    grid: np.ndarray,
+    colors: list[dict[str, object]],
+    artifact_id: str,
+    board: dict[str, object],
+    output_path: Path,
+) -> int:
+    """Render one physical board per A4 page with global row and column coordinates."""
+    page_width, page_height = A4
+    margin_left = 42.0
+    margin_right = 30.0
+    margin_bottom = 42.0
+    header_height = 72.0
+    board_columns = int(board["columns"])
+    board_rows = int(board["rows"])
+    row_count = math.ceil(grid.shape[0] / board_rows)
+    column_count = math.ceil(grid.shape[1] / board_columns)
+    page_count = row_count * column_count
+    document = pdf_canvas.Canvas(str(output_path), pagesize=A4, pageCompression=1)
+    document.setTitle(f"{artifact_id} board charts")
+    document.setAuthor("PerlerDrawing Desktop")
+    document.setSubject("Printable perler bead board charts")
+
+    page_number = 0
+    for board_row in range(row_count):
+        for board_col in range(column_count):
+            page_number += 1
+            row_start = board_row * board_rows
+            col_start = board_col * board_columns
+            tile = grid[
+                row_start : row_start + board_rows,
+                col_start : col_start + board_columns,
+            ]
+            available_width = page_width - margin_left - margin_right
+            available_height = page_height - margin_bottom - header_height
+            cell_size = min(
+                14.4,  # 5.08 mm standard peg pitch at 72 points per inch.
+                available_width / max(1, tile.shape[1]),
+                available_height / max(1, tile.shape[0]),
+            )
+            grid_width = tile.shape[1] * cell_size
+            grid_height = tile.shape[0] * cell_size
+            origin_x = margin_left
+            origin_y = margin_bottom + (available_height - grid_height) / 2
+
+            document.setFillColorRGB(0.10, 0.10, 0.13)
+            document.setFont("Helvetica-Bold", 15)
+            document.drawString(margin_left, page_height - 32, artifact_id)
+            document.setFont("Helvetica", 8.5)
+            document.setFillColorRGB(0.33, 0.34, 0.39)
+            document.drawString(
+                margin_left,
+                page_height - 49,
+                f"Board r{board_row + 1} c{board_col + 1} | "
+                f"rows {row_start + 1}-{row_start + tile.shape[0]} | "
+                f"columns {col_start + 1}-{col_start + tile.shape[1]} | 5.08 mm pitch",
+            )
+            page_label = f"Page {page_number} / {page_count}"
+            document.drawRightString(page_width - margin_right, page_height - 32, page_label)
+
+            code_size = max(4.2, min(7.0, cell_size * 0.27))
+            coordinate_size = max(4.6, min(7.2, cell_size * 0.3))
+            document.setLineWidth(0.35)
+            for row in range(tile.shape[0]):
+                for col in range(tile.shape[1]):
+                    x = origin_x + col * cell_size
+                    y = origin_y + (tile.shape[0] - row - 1) * cell_size
+                    document.setFillColorRGB(1, 1, 1)
+                    document.setStrokeColorRGB(0.82, 0.83, 0.86)
+                    document.rect(x, y, cell_size, cell_size, fill=1, stroke=1)
+                    value = int(tile[row, col])
+                    if value == EMPTY_CELL:
+                        continue
+                    color = colors[value]
+                    red, green, blue = [int(channel) / 255.0 for channel in color["rgb"]]
+                    inset = max(1.0, cell_size * 0.09)
+                    document.setFillColorRGB(red, green, blue)
+                    document.setStrokeColorRGB(0.22, 0.22, 0.25)
+                    document.circle(
+                        x + cell_size / 2,
+                        y + cell_size / 2,
+                        cell_size / 2 - inset,
+                        fill=1,
+                        stroke=1,
+                    )
+                    code = str(color["code"])
+                    luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+                    document.setFillColorRGB(*(0.08, 0.08, 0.10) if luminance > 0.58 else (1, 1, 1))
+                    document.setFont("Helvetica-Bold", code_size)
+                    document.drawString(
+                        x + (cell_size - stringWidth(code, "Helvetica-Bold", code_size)) / 2,
+                        y + cell_size / 2 - code_size * 0.34,
+                        code,
+                    )
+
+            document.setFont("Helvetica", coordinate_size)
+            document.setFillColorRGB(0.28, 0.29, 0.34)
+            for col in range(tile.shape[1]):
+                label = str(col_start + col + 1)
+                document.drawString(
+                    origin_x
+                    + col * cell_size
+                    + (cell_size - stringWidth(label, "Helvetica", coordinate_size)) / 2,
+                    origin_y + grid_height + 5,
+                    label,
+                )
+            for row in range(tile.shape[0]):
+                label = str(row_start + row + 1)
+                document.drawRightString(
+                    origin_x - 5,
+                    origin_y
+                    + (tile.shape[0] - row - 0.5) * cell_size
+                    - coordinate_size * 0.32,
+                    label,
+                )
+            document.setStrokeColorRGB(0.36, 0.30, 0.77)
+            document.setLineWidth(1.8)
+            document.rect(origin_x, origin_y, grid_width, grid_height, fill=0, stroke=1)
+            document.showPage()
+    document.save()
+    return page_count
+
+
+def export_board_pdf(
+    snapshot_path: Path,
+    pdf_path: Path,
+    progress: ProgressCallback,
+) -> dict[str, object]:
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    grid, colors = _validate_snapshot(snapshot)
+    artifact = snapshot["artifact"]
+    board = snapshot["board"]
+    row_min, col_min, row_max, col_max = _occupied_bounds(grid)
+    artifact_id = (
+        f"{artifact['name']}_{col_max - col_min + 1}x{row_max - row_min + 1}_"
+        f"{artifact['version']}"
+    )
+    progress("pdf", 0.2, "export.progress.pdf")
+    target = pdf_path.resolve()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        prefix=f".{artifact_id}-",
+        suffix=".pdf",
+        dir=target.parent,
+        delete=False,
+    ) as temporary:
+        temporary_path = Path(temporary.name)
+    try:
+        page_count = _render_board_pdf(grid, colors, artifact_id, board, temporary_path)
+        if temporary_path.stat().st_size < 1024:
+            raise ValueError("Generated PDF is unexpectedly small.")
+        os.replace(temporary_path, target)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+    progress("complete", 1.0, "export.progress.complete")
+    return {
+        "artifact_id": artifact_id,
+        "pdf_path": str(target),
+        "page_count": page_count,
+    }
+
+
 def _write_csv(grid: np.ndarray, colors: list[dict[str, object]], path: Path) -> None:
     with path.open("w", newline="", encoding="utf-8-sig") as stream:
         writer = csv.writer(stream, lineterminator="\r\n")
@@ -287,6 +453,9 @@ def _validate_delivery(directory: Path, artifact_id: str, grid: np.ndarray, inve
     tiles = sorted((directory / "tiles").glob("*.png"))
     if len(tiles) != expected_tiles:
         raise ValueError("Tile count does not match board layout.")
+    pdf_path = directory / f"{artifact_id}_boards.pdf"
+    if pdf_path.stat().st_size < 1024 or pdf_path.read_bytes()[:5] != b"%PDF-":
+        raise ValueError("Board PDF is missing or invalid.")
     preview = np.asarray(Image.open(directory / f"{artifact_id}_preview.png").convert("RGBA"))
     scale_y = preview.shape[0] // grid.shape[0]
     scale_x = preview.shape[1] // grid.shape[1]
@@ -299,6 +468,7 @@ def _validate_delivery(directory: Path, artifact_id: str, grid: np.ndarray, inve
         "palette_indices_valid": True,
         "preview_occupancy_matches": True,
         "tile_count": expected_tiles,
+        "pdf_valid": True,
     }
 
 
@@ -340,6 +510,14 @@ def export_package(
     _render_chart(grid, colors, inventory, artifact_id, board, package_dir)
     progress("tiles", 0.68, "export.progress.tiles")
     tile_count = _render_tiles(grid, colors, artifact_id, board, package_dir)
+    progress("pdf", 0.76, "export.progress.pdf")
+    _render_board_pdf(
+        grid,
+        colors,
+        artifact_id,
+        board,
+        package_dir / f"{artifact_id}_boards.pdf",
+    )
 
     used_codes = [str(colors[index]["code"]) for index in sorted(inventory)]
     processing = snapshot.get("processing") if isinstance(snapshot.get("processing"), dict) else {}
@@ -392,7 +570,7 @@ def export_package(
         encoding="utf-8",
     )
 
-    progress("validate", 0.82, "export.progress.validate")
+    progress("validate", 0.86, "export.progress.validate")
     validation = _validate_delivery(package_dir, artifact_id, grid, inventory, tile_count)
     archive_path = archive_path.resolve()
     archive_path.parent.mkdir(parents=True, exist_ok=True)

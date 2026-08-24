@@ -205,7 +205,7 @@ export async function readJobImage(
   return URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: "image/png" }));
 }
 
-export function createJobId(prefix: "image" | "export" | "codex"): string {
+export function createJobId(prefix: "image" | "export" | "pdf" | "codex"): string {
   const suffix =
     globalThis.crypto?.randomUUID?.().replaceAll("-", "") ??
     `${Date.now()}${Math.random().toString(16).slice(2)}`;

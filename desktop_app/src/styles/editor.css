@@ -438,6 +438,10 @@
   cursor: grabbing;
 }
 
+.pattern-canvas__interaction[data-cursor="move"] {
+  cursor: move;
+}
+
 .inspector {
   z-index: 3;
   min-width: 0;
@@ -546,6 +550,135 @@
   color: var(--color-text-subtle);
   font-size: 10px;
   line-height: 1.45;
+}
+
+.inspector-note--spaced {
+  margin-top: 9px;
+}
+
+.inspector-select {
+  width: 100%;
+  min-height: 34px;
+  padding: 0 9px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 9px;
+  color: var(--color-text);
+  outline: none;
+  background: var(--color-bg);
+  font-size: 10px;
+}
+
+.inspector-select:focus {
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 15%, transparent);
+}
+
+.inspector-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.inspector-action-grid button {
+  min-height: 31px;
+  padding: 5px 7px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inspector-action-grid button:hover:not(:disabled) {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+.inspector-action-grid button[data-danger="true"] {
+  color: var(--color-danger);
+}
+
+.inspector-action-grid button:disabled {
+  opacity: 0.4;
+}
+
+.comparison-overlay {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 9px 8px 11px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-bg-elevated) 92%, transparent);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(12px);
+}
+
+.comparison-overlay > span:first-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  margin-right: 4px;
+}
+
+.comparison-overlay strong,
+.comparison-overlay small {
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comparison-overlay strong {
+  font-size: 10px;
+}
+
+.comparison-overlay small {
+  color: var(--color-text-subtle);
+  font-size: 8px;
+}
+
+.comparison-overlay > span[data-kind] {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.comparison-overlay > span[data-kind="added"] {
+  color: var(--color-success);
+}
+
+.comparison-overlay > span[data-kind="removed"] {
+  color: var(--color-danger);
+}
+
+.comparison-overlay > span[data-kind="changed"] {
+  color: var(--color-warning);
+}
+
+.comparison-overlay button {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  color: var(--color-text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.comparison-overlay button:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
 }
 
 .inspector-section--palette {
@@ -1567,6 +1700,72 @@
   width: min(720px, 100%);
 }
 
+.board-pdf-dialog,
+.version-compare-dialog {
+  width: min(680px, 100%);
+}
+
+.board-pdf-dialog .csv-export-file {
+  margin-top: 18px;
+}
+
+.compare-file-button {
+  margin-top: 20px;
+}
+
+.compare-file-summary {
+  margin-top: 14px;
+}
+
+.compare-file-summary > svg {
+  width: 22px;
+  height: 22px;
+  color: var(--color-success);
+}
+
+.compare-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.compare-summary-grid > span {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg);
+}
+
+.compare-summary-grid small {
+  color: var(--color-text-muted);
+  font-size: 9px;
+}
+
+.compare-summary-grid strong {
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.compare-summary-grid > span[data-kind="added"] strong {
+  color: var(--color-success);
+}
+
+.compare-summary-grid > span[data-kind="removed"] strong {
+  color: var(--color-danger);
+}
+
+.compare-summary-grid > span[data-kind="changed"] strong {
+  color: var(--color-warning);
+}
+
+.compare-empty-preview {
+  min-height: 160px;
+  margin-top: 14px;
+}
+
 .complete-export-dialog .csv-export-file {
   margin-top: 19px;
 }
@@ -1637,6 +1836,20 @@
 }
 
 @media (max-width: 1120px) {
+  .offline-badge--compact {
+    display: none;
+  }
+
+  .editor-export {
+    width: 34px;
+    min-height: 34px;
+    padding: 0;
+  }
+
+  .editor-export > span {
+    display: none;
+  }
+
   .image-import-main {
     grid-template-columns: minmax(340px, 0.85fr) minmax(480px, 1.15fr);
   }

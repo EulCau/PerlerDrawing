@@ -1,6 +1,6 @@
 # PerlerDrawing Desktop
 
-跨平台拼豆图纸制作应用. 当前已经完成桌面基础壳, 编辑器核心模型, Canvas 编辑器, CSV 工作流, 高分辨率图片转换, 完整交付导出, 可选 Codex 分析和原生安装包流水线. 图片处理包含边界连通去背景, Haar 小波结构简化, Lab 聚类, 预乘 alpha 栅格化和真实 MARD 色卡量化.
+跨平台拼豆图纸制作应用. 当前已经完成桌面基础壳, 编辑器核心模型, Canvas 编辑器, CSV 工作流, 高分辨率图片转换, 高级选区与对称编辑, 分板 PDF, 版本比较, 完整交付导出, 可选 Codex 分析和原生安装包流水线. 图片处理包含边界连通去背景, Haar 小波结构简化, Lab 聚类, 预乘 alpha 栅格化和真实 MARD 色卡量化.
 
 详细方案见 [docs/product-requirements-and-technical-plan.md](docs/product-requirements-and-technical-plan.md).
 逐步实施状态见 [docs/implementation-plan.md](docs/implementation-plan.md).
@@ -76,6 +76,6 @@ desktop_app/
 - 默认色卡: `MARD 221 v1`.
 - 目标平台: Windows 10/11 和 Arch Linux.
 
-## 下一步
+## 当前状态
 
-实现选区, 变换, 对称绘制, 分板打印, PDF 和大画布性能优化.
+产品文档中的四个阶段均已完成. 画布保持紧凑 `Uint16Array` 文档模型, 使用静态网格, 脏矩形拼豆和交互叠层的多层 Canvas 渲染, 300 x 300 网格不会创建逐格 DOM 节点.

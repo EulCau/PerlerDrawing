@@ -2,7 +2,15 @@ import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 
 export type EditorTool =
-  "brush" | "eraser" | "eyedropper" | "fill" | "line" | "rectangle" | "ellipse" | "pan";
+  | "brush"
+  | "eraser"
+  | "eyedropper"
+  | "fill"
+  | "line"
+  | "rectangle"
+  | "ellipse"
+  | "selection"
+  | "pan";
 
 interface EditorState {
   readonly activeTool: EditorTool;

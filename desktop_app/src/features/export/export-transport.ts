@@ -19,6 +19,7 @@ export interface CompleteExportResult {
     readonly palette_indices_valid: boolean;
     readonly preview_occupancy_matches: boolean;
     readonly tile_count: number;
+    readonly pdf_valid: boolean;
   };
 }
 

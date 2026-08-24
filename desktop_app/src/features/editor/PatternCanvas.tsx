@@ -14,8 +14,11 @@ import { useEditorStore, type EditorTool } from "../../app/editor-store";
 import { useSettingsStore } from "../../app/settings-store";
 import { createGridPatchCommand } from "../../editor/commands/grid-patch-command";
 import {
+  computeGridDifferenceBounds,
+  renderBeadCanvas,
+  renderGridCanvas,
+  renderGridOverlayCanvas,
   renderInteractionCanvas,
-  renderPatternCanvas,
   type CanvasTheme,
 } from "../../editor/canvas/render-canvas";
 import {
@@ -27,7 +30,14 @@ import {
   type CanvasViewport,
 } from "../../editor/canvas/viewport";
 import { EMPTY_CELL, getCell } from "../../editor/model/grid";
-import type { PatternDocument } from "../../editor/model/pattern-document";
+import type { CellDifference } from "../../editor/model/grid-comparison";
+import type { PatternDocument, SymmetrySettings } from "../../editor/model/pattern-document";
+import {
+  normalizeSelection,
+  selectionContains,
+  translateSelection,
+  type GridSelection,
+} from "../../editor/selection/grid-selection";
 import { floodFillCells } from "../../editor/tools/flood-fill";
 import {
   rasterizeEllipse,
@@ -35,6 +45,7 @@ import {
   rasterizeRectangle,
   type GridPoint,
 } from "../../editor/tools/geometry";
+import { applySymmetryToChanges } from "../../editor/tools/symmetry";
 
 export interface PatternCanvasHandle {
   fit(): void;
@@ -51,6 +62,19 @@ interface PatternCanvasProps {
   readonly onRedo: () => boolean;
   readonly onCursorChange: (point: GridPoint | null) => void;
   readonly onZoomChange: (zoomPercent: number) => void;
+  readonly selection: GridSelection | null;
+  readonly symmetry: SymmetrySettings;
+  readonly differences: readonly CellDifference[];
+  readonly onSelectionChange: (selection: GridSelection | null) => void;
+  readonly onMoveSelection: (
+    selection: GridSelection,
+    columnDelta: number,
+    rowDelta: number,
+  ) => void;
+  readonly onClearSelection: () => void;
+  readonly onDeleteSelection: () => void;
+  readonly onCopySelection: () => void;
+  readonly onPasteSelection: () => void;
 }
 
 type Gesture =
@@ -73,6 +97,18 @@ type Gesture =
       readonly tool: "line" | "rectangle" | "ellipse";
       readonly start: GridPoint;
       points: GridPoint[];
+    }
+  | {
+      readonly kind: "selection";
+      readonly pointerId: number;
+      readonly start: GridPoint;
+    }
+  | {
+      readonly kind: "selection-move";
+      readonly pointerId: number;
+      readonly start: GridPoint;
+      readonly original: GridSelection;
+      current: GridSelection;
     };
 
 function pointKey(point: GridPoint): string {
@@ -87,6 +123,18 @@ function clipPoints(points: readonly GridPoint[], document: PatternDocument): Gr
       point.column < document.grid.columns &&
       point.row < document.grid.rows,
   );
+}
+
+function symmetricPoints(
+  points: readonly GridPoint[],
+  document: PatternDocument,
+  symmetry: SymmetrySettings,
+): GridPoint[] {
+  return applySymmetryToChanges(
+    points.map((point) => ({ ...point, value: 0 })),
+    document.grid,
+    symmetry,
+  ).map(({ column, row }) => ({ column, row }));
 }
 
 function shapePoints(
@@ -117,6 +165,10 @@ function readTheme(): CanvasTheme {
     beadHole: variable("--canvas-bead-hole", "rgba(255, 255, 255, 0.7)"),
     accent: variable("--color-accent", "#6759d7"),
     erase: variable("--color-danger", "#d94b5f"),
+    selectionFill: variable("--color-accent-soft", "rgba(103, 89, 215, 0.12)"),
+    differenceAdded: variable("--color-success", "#278b63"),
+    differenceRemoved: variable("--color-danger", "#d94b5f"),
+    differenceChanged: variable("--color-warning", "#b7791f"),
   };
 }
 
@@ -132,7 +184,24 @@ function localWheelPoint(event: WheelEvent<HTMLCanvasElement>): CanvasPoint {
 
 export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>(
   function PatternCanvas(
-    { document, revision, onExecute, onUndo, onRedo, onCursorChange, onZoomChange },
+    {
+      document,
+      revision,
+      onExecute,
+      onUndo,
+      onRedo,
+      onCursorChange,
+      onZoomChange,
+      selection,
+      symmetry,
+      differences,
+      onSelectionChange,
+      onMoveSelection,
+      onClearSelection,
+      onDeleteSelection,
+      onCopySelection,
+      onPasteSelection,
+    },
     forwardedRef,
   ) {
     const { t } = useTranslation();
@@ -144,13 +213,17 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
     const setSelectedColorIndex = useEditorStore((state) => state.setSelectedColorIndex);
     const themeMode = useSettingsStore((state) => state.theme);
     const containerRef = useRef<HTMLDivElement>(null);
-    const baseCanvasRef = useRef<HTMLCanvasElement>(null);
+    const gridCanvasRef = useRef<HTMLCanvasElement>(null);
+    const beadCanvasRef = useRef<HTMLCanvasElement>(null);
+    const guideCanvasRef = useRef<HTMLCanvasElement>(null);
     const interactionCanvasRef = useRef<HTMLCanvasElement>(null);
     const gestureRef = useRef<Gesture | null>(null);
     const documentRef = useRef(document);
     const viewportRef = useRef<CanvasViewport>({ offsetX: 0, offsetY: 0, cellSize: 16 });
     const sizeRef = useRef<CanvasSize>({ width: 0, height: 0 });
     const lastFitKeyRef = useRef("");
+    const renderKeyRef = useRef("");
+    const previousCellsRef = useRef<Uint16Array | null>(null);
     const [size, setSize] = useState<CanvasSize>({ width: 0, height: 0 });
     const [viewport, setViewport] = useState<CanvasViewport>(viewportRef.current);
     const [hover, setHover] = useState<GridPoint | null>(null);
@@ -228,9 +301,43 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
     }, [document, setViewportAndRef, size]);
 
     useEffect(() => {
-      const canvas = baseCanvasRef.current;
-      if (!canvas || size.width <= 0 || size.height <= 0) return;
-      renderPatternCanvas(canvas, document, viewport, size, readTheme());
+      const gridCanvas = gridCanvasRef.current;
+      const beadCanvas = beadCanvasRef.current;
+      const guideCanvas = guideCanvasRef.current;
+      if (!gridCanvas || !beadCanvas || !guideCanvas || size.width <= 0 || size.height <= 0) return;
+      const theme = readTheme();
+      const renderKey = [
+        document.artifact.name,
+        document.artifact.version,
+        document.grid.columns,
+        document.grid.rows,
+        document.board.columns,
+        document.board.rows,
+        document.board.subdivision,
+        size.width,
+        size.height,
+        viewport.offsetX,
+        viewport.offsetY,
+        viewport.cellSize,
+        themeMode,
+      ].join(":");
+      const previousCells = previousCellsRef.current;
+      if (renderKeyRef.current !== renderKey || !previousCells) {
+        renderGridCanvas(gridCanvas, document, viewport, size, theme);
+        renderBeadCanvas(beadCanvas, document, viewport, size, theme);
+        renderGridOverlayCanvas(guideCanvas, document, viewport, size, theme);
+      } else {
+        const dirtyBounds = computeGridDifferenceBounds(
+          previousCells,
+          document.grid.cells,
+          document.grid.columns,
+        );
+        if (dirtyBounds) {
+          renderBeadCanvas(beadCanvas, document, viewport, size, theme, dirtyBounds);
+        }
+      }
+      renderKeyRef.current = renderKey;
+      previousCellsRef.current = document.grid.cells.slice();
     }, [document, revision, size, themeMode, viewport]);
 
     useEffect(() => {
@@ -246,13 +353,17 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
         color,
         previewErasing,
         readTheme(),
+        selection,
+        differences,
       );
     }, [
       document.palette.colors,
+      differences,
       hover,
       preview,
       previewErasing,
       selectedColorIndex,
+      selection,
       size,
       themeMode,
       viewport,
@@ -267,14 +378,15 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
         const currentDocument = documentRef.current;
         const clipped = clipPoints(points, currentDocument);
         if (clipped.length === 0) return;
-        const command = createGridPatchCommand(
-          currentDocument,
-          label,
+        const changes = applySymmetryToChanges(
           clipped.map((point) => ({ ...point, value })),
+          currentDocument.grid,
+          symmetry,
         );
+        const command = createGridPatchCommand(currentDocument, label, changes);
         onExecute(command);
       },
-      [onExecute],
+      [onExecute, symmetry],
     );
 
     const updateHover = (event: PointerEvent<HTMLCanvasElement>): GridPoint | null => {
@@ -311,6 +423,27 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
       if (!point) return;
       const currentDocument = documentRef.current;
 
+      if (activeTool === "selection") {
+        if (selection && selectionContains(selection, point)) {
+          gestureRef.current = {
+            kind: "selection-move",
+            pointerId: event.pointerId,
+            start: point,
+            original: selection,
+            current: selection,
+          };
+        } else {
+          const nextSelection = normalizeSelection(point, point);
+          onSelectionChange(nextSelection);
+          gestureRef.current = {
+            kind: "selection",
+            pointerId: event.pointerId,
+            start: point,
+          };
+        }
+        return;
+      }
+
       if (activeTool === "eyedropper") {
         const value = getCell(currentDocument.grid, point.row, point.column);
         if (value !== EMPTY_CELL && value < currentDocument.palette.colors.length) {
@@ -328,9 +461,10 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
 
       if (activeTool === "brush" || activeTool === "eraser") {
         const points = new Map<string, GridPoint>();
-        for (const stampedPoint of clipPoints(
-          rasterizeLine(point, point, strokeWidth),
+        for (const stampedPoint of symmetricPoints(
+          clipPoints(rasterizeLine(point, point, strokeWidth), currentDocument),
           currentDocument,
+          symmetry,
         )) {
           points.set(pointKey(stampedPoint), stampedPoint);
         }
@@ -348,9 +482,13 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
       }
 
       if (activeTool === "line" || activeTool === "rectangle" || activeTool === "ellipse") {
-        const points = clipPoints(
-          shapePoints(activeTool, point, point, strokeWidth, shapeFilled),
+        const points = symmetricPoints(
+          clipPoints(
+            shapePoints(activeTool, point, point, strokeWidth, shapeFilled),
+            currentDocument,
+          ),
           currentDocument,
+          symmetry,
         );
         gestureRef.current = {
           kind: "shape",
@@ -378,11 +516,28 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
       const point = updateHover(event);
       if (!gesture || gesture.pointerId !== event.pointerId || !point) return;
 
+      if (gesture.kind === "selection") {
+        onSelectionChange(normalizeSelection(gesture.start, point));
+        return;
+      }
+
+      if (gesture.kind === "selection-move") {
+        gesture.current = translateSelection(
+          gesture.original,
+          point.column - gesture.start.column,
+          point.row - gesture.start.row,
+          documentRef.current.grid,
+        );
+        onSelectionChange(gesture.current);
+        return;
+      }
+
       if (gesture.kind === "stroke") {
         if (point.column === gesture.last.column && point.row === gesture.last.row) return;
-        for (const stampedPoint of clipPoints(
-          rasterizeLine(gesture.last, point, strokeWidth),
+        for (const stampedPoint of symmetricPoints(
+          clipPoints(rasterizeLine(gesture.last, point, strokeWidth), documentRef.current),
           documentRef.current,
+          symmetry,
         )) {
           gesture.points.set(pointKey(stampedPoint), stampedPoint);
         }
@@ -392,9 +547,13 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
       }
 
       if (gesture.kind === "shape") {
-        gesture.points = clipPoints(
-          shapePoints(gesture.tool, gesture.start, point, strokeWidth, shapeFilled),
+        gesture.points = symmetricPoints(
+          clipPoints(
+            shapePoints(gesture.tool, gesture.start, point, strokeWidth, shapeFilled),
+            documentRef.current,
+          ),
           documentRef.current,
+          symmetry,
         );
         setPreview(gesture.points);
       }
@@ -414,6 +573,12 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
         );
       } else if (gesture.kind === "shape") {
         commitPoints(gesture.points, selectedColorIndex, `Draw ${gesture.tool}`);
+      } else if (gesture.kind === "selection-move") {
+        onMoveSelection(
+          gesture.original,
+          gesture.current.left - gesture.original.left,
+          gesture.current.top - gesture.original.top,
+        );
       }
 
       setPreview([]);
@@ -421,6 +586,8 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
     };
 
     const cancelGesture = () => {
+      const gesture = gestureRef.current;
+      if (gesture?.kind === "selection-move") onSelectionChange(gesture.original);
       gestureRef.current = null;
       setIsPanning(false);
       setPreview([]);
@@ -430,6 +597,16 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
     const handleKeyDown = (event: KeyboardEvent<HTMLCanvasElement>) => {
       const modifier = event.ctrlKey || event.metaKey;
       const key = event.key.toLowerCase();
+      if (modifier && key === "c" && selection) {
+        event.preventDefault();
+        onCopySelection();
+        return;
+      }
+      if (modifier && key === "v") {
+        event.preventDefault();
+        onPasteSelection();
+        return;
+      }
       if (modifier && key === "z") {
         event.preventDefault();
         if (event.shiftKey) onRedo();
@@ -447,7 +624,13 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
         return;
       }
       if (event.key === "Escape") {
-        cancelGesture();
+        if (gestureRef.current) cancelGesture();
+        else onClearSelection();
+        return;
+      }
+      if (event.key === "Delete" && selection) {
+        event.preventDefault();
+        onDeleteSelection();
         return;
       }
       if (event.key === "Delete" && hover) {
@@ -470,6 +653,18 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
         zoomBy(1 / 1.2);
         return;
       }
+      const arrowDelta: Readonly<Record<string, readonly [number, number]>> = {
+        ArrowLeft: [-1, 0],
+        ArrowRight: [1, 0],
+        ArrowUp: [0, -1],
+        ArrowDown: [0, 1],
+      };
+      const delta = arrowDelta[event.key];
+      if (selection && delta) {
+        event.preventDefault();
+        onMoveSelection(selection, delta[0], delta[1]);
+        return;
+      }
 
       const shortcuts: Partial<Record<string, EditorTool>> = {
         b: "brush",
@@ -480,6 +675,7 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
         r: "rectangle",
         o: "ellipse",
         h: "pan",
+        s: "selection",
       };
       const tool = shortcuts[key];
       if (tool && !modifier && !event.altKey) {
@@ -492,13 +688,17 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
       ? "grabbing"
       : activeTool === "pan" || spacePan
         ? "grab"
-        : activeTool === "fill" || activeTool === "eyedropper"
-          ? "cell"
-          : "crosshair";
+        : activeTool === "selection" && selection && hover && selectionContains(selection, hover)
+          ? "move"
+          : activeTool === "fill" || activeTool === "eyedropper"
+            ? "cell"
+            : "crosshair";
 
     return (
       <div className="pattern-canvas" ref={containerRef}>
-        <canvas aria-hidden="true" className="pattern-canvas__layer" ref={baseCanvasRef} />
+        <canvas aria-hidden="true" className="pattern-canvas__layer" ref={gridCanvasRef} />
+        <canvas aria-hidden="true" className="pattern-canvas__layer" ref={beadCanvasRef} />
+        <canvas aria-hidden="true" className="pattern-canvas__layer" ref={guideCanvasRef} />
         <canvas
           aria-describedby="canvas-help"
           aria-label={t("editor.canvasLabel", {

@@ -8,7 +8,7 @@ from pathlib import Path, PurePosixPath
 
 from PIL import Image
 
-from perlerdrawing_sidecar.exporter import EMPTY_CELL, export_package
+from perlerdrawing_sidecar.exporter import EMPTY_CELL, export_board_pdf, export_package
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
@@ -57,12 +57,14 @@ class ExporterTests(unittest.TestCase):
             self.assertTrue(result["validation"]["inventory_matches"])
             self.assertTrue(result["validation"]["palette_indices_valid"])
             self.assertTrue(result["validation"]["preview_occupancy_matches"])
+            self.assertTrue(result["validation"]["pdf_valid"])
             self.assertEqual(result["validation"]["tile_count"], 4)
             self.assertTrue(archive_path.is_file())
             with tarfile.open(archive_path, "r:gz") as archive:
                 names = archive.getnames()
                 self.assertTrue(any(name.endswith("_preview_white.png") for name in names))
                 self.assertTrue(any("/tiles/" in name for name in names))
+                self.assertTrue(any(name.endswith("_boards.pdf") for name in names))
                 self.assertTrue(any(name.endswith("/masters/test_badge_master.png") for name in names))
                 for name in names:
                     path = PurePosixPath(name)
@@ -78,6 +80,18 @@ class ExporterTests(unittest.TestCase):
             snapshot_path.write_text(json.dumps(value), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "empty pattern"):
                 export_package(snapshot_path, root / "delivery.tar.gz", root / "work", lambda *_: None)
+
+    def test_board_pdf_uses_one_page_per_physical_board(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            snapshot_path = root / "snapshot.json"
+            snapshot_path.write_text(json.dumps(snapshot()), encoding="utf-8")
+            pdf_path = root / "boards.pdf"
+            result = export_board_pdf(snapshot_path, pdf_path, lambda *_: None)
+            self.assertEqual(result["artifact_id"], "test_badge_5x5_v1")
+            self.assertEqual(result["page_count"], 4)
+            self.assertGreater(pdf_path.stat().st_size, 1024)
+            self.assertEqual(pdf_path.read_bytes()[:5], b"%PDF-")
 
 
 if __name__ == "__main__":

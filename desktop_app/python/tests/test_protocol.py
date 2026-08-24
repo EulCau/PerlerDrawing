@@ -8,6 +8,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
+from perlerdrawing_sidecar.exporter import EMPTY_CELL
 from perlerdrawing_sidecar.protocol import PROTOCOL_VERSION, serve
 
 
@@ -70,6 +71,40 @@ class ProtocolTests(unittest.TestCase):
             self.assertEqual(progress, sorted(progress))
             self.assertEqual(progress[-1], 1.0)
             self.assertTrue((root / "output" / "master.png").is_file())
+
+    def test_pdf_request_dispatches_to_the_atomic_board_export(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            cells = [EMPTY_CELL] * 16
+            cells[5] = 0
+            snapshot = {
+                "schemaVersion": 1,
+                "artifact": {"name": "protocol_pdf", "version": "v1"},
+                "canvas": {"columns": 4, "rows": 4},
+                "board": {"columns": 2, "rows": 2, "subdivision": 1},
+                "palette": {"name": "MARD 221 v1", "colors": palette()},
+                "symmetry": {"type": "none"},
+                "processing": {"source": "test"},
+                "cells": cells,
+            }
+            snapshot_path = root / "snapshot.json"
+            snapshot_path.write_text(json.dumps(snapshot), encoding="utf-8")
+            pdf_path = root / "boards.pdf"
+            request = {
+                "protocol_version": PROTOCOL_VERSION,
+                "job_id": "pdf-job",
+                "operation": "export_board_pdf",
+                "payload": {
+                    "snapshot_path": str(snapshot_path),
+                    "pdf_path": str(pdf_path),
+                },
+            }
+            target = io.StringIO()
+            self.assertEqual(serve(io.StringIO(json.dumps(request) + "\n"), target), 0)
+            events = [json.loads(line) for line in target.getvalue().splitlines()]
+            self.assertEqual(events[-1]["type"], "result")
+            self.assertEqual(events[-1]["result"]["page_count"], 4)
+            self.assertEqual(pdf_path.read_bytes()[:5], b"%PDF-")
 
 
 if __name__ == "__main__":

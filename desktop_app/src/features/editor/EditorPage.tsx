@@ -1,5 +1,5 @@
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
-import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useDocumentStore } from "../../app/document-store";
 import { useEditorStore, type EditorTool } from "../../app/editor-store";
@@ -14,27 +14,55 @@ import { BrandMark } from "../../components/BrandMark";
 import {
   BackIcon,
   BrushIcon,
+  ClockIcon,
+  DownloadIcon,
   EllipseIcon,
   EraserIcon,
   EyedropperIcon,
   FillIcon,
+  FileIcon,
   FitIcon,
   HandIcon,
   LineIcon,
   MoonIcon,
   RectangleIcon,
   RedoIcon,
+  SelectionIcon,
   SunIcon,
   SystemIcon,
+  TableIcon,
   UndoIcon,
   ZoomInIcon,
   ZoomOutIcon,
 } from "../../components/Icons";
+import { createGridPatchCommand } from "../../editor/commands/grid-patch-command";
+import { createSymmetryCommand } from "../../editor/commands/symmetry-command";
+import type { PatternGrid } from "../../editor/model/grid";
+import { comparePatternGrids } from "../../editor/model/grid-comparison";
 import { computeOccupiedBounds } from "../../editor/model/occupied-bounds";
+import type { SymmetrySettings, SymmetryType } from "../../editor/model/pattern-document";
+import {
+  clearGridSelection,
+  copyGridSelection,
+  moveGridSelection,
+  pasteGridClipboard,
+  selectionHeight,
+  selectionWidth,
+  transformGridSelection,
+  type GridClipboard,
+  type GridSelection,
+  type SelectionTransform,
+} from "../../editor/selection/grid-selection";
 import type { GridPoint } from "../../editor/tools/geometry";
+import {
+  fillSingleCellMaskHoles,
+  removeIsolatedMaskCells,
+} from "../../editor/tools/mask-correction";
 import { PatternCanvas, type PatternCanvasHandle } from "./PatternCanvas";
 import { CsvExportDialog } from "../csv/CsvExportDialog";
 import { CompleteExportDialog } from "../export/CompleteExportDialog";
+import { BoardPdfDialog } from "../export/BoardPdfDialog";
+import { VersionCompareDialog } from "./VersionCompareDialog";
 
 interface EditorPageProps {
   readonly onBack: () => void;
@@ -54,8 +82,25 @@ const TOOL_DEFINITIONS: readonly ToolDefinition[] = [
   { id: "line", shortcut: "L", icon: <LineIcon /> },
   { id: "rectangle", shortcut: "R", icon: <RectangleIcon /> },
   { id: "ellipse", shortcut: "O", icon: <EllipseIcon /> },
+  { id: "selection", shortcut: "S", icon: <SelectionIcon /> },
   { id: "pan", shortcut: "H", icon: <HandIcon /> },
 ];
+
+function symmetrySettings(type: SymmetryType, columns: number, rows: number): SymmetrySettings {
+  if (type === "vertical") return { type, axisOrCenter: [(columns - 1) / 2] };
+  if (type === "horizontal") return { type, axisOrCenter: [(rows - 1) / 2] };
+  if (type === "central") {
+    return { type, axisOrCenter: [(rows - 1) / 2, (columns - 1) / 2] };
+  }
+  return { type: "none" };
+}
+
+const SYMMETRY_LABEL_KEYS: Readonly<Record<SymmetryType, string>> = {
+  none: "image.symmetryNone",
+  vertical: "image.symmetryVertical",
+  horizontal: "image.symmetryHorizontal",
+  central: "image.symmetryCentral",
+};
 
 function EditorPreferences() {
   const { t } = useTranslation();
@@ -142,6 +187,14 @@ export function EditorPage({ onBack }: EditorPageProps) {
   const [paletteQuery, setPaletteQuery] = useState("");
   const [showCsvExport, setShowCsvExport] = useState(false);
   const [showCompleteExport, setShowCompleteExport] = useState(false);
+  const [showPdfExport, setShowPdfExport] = useState(false);
+  const [showVersionCompare, setShowVersionCompare] = useState(false);
+  const [selection, setSelection] = useState<GridSelection | null>(null);
+  const [clipboard, setClipboard] = useState<GridClipboard | null>(null);
+  const [comparisonReference, setComparisonReference] = useState<{
+    readonly fileName: string;
+    readonly grid: PatternGrid;
+  } | null>(null);
   const bounds = useMemo(
     () => (document ? computeOccupiedBounds(document.grid) : null),
     [document],
@@ -157,8 +210,105 @@ export function EditorPage({ onBack }: EditorPageProps) {
         `${color.code} ${color.name ?? ""} ${color.hex}`.toLocaleUpperCase().includes(query),
       );
   }, [document, paletteQuery]);
+  const comparison = useMemo(
+    () =>
+      document && comparisonReference
+        ? {
+            fileName: comparisonReference.fileName,
+            result: comparePatternGrids(document.grid, comparisonReference.grid),
+          }
+        : null,
+    [comparisonReference, document],
+  );
+
+  const executeSelectionEdit = useCallback(
+    (
+      edit: {
+        readonly selection: GridSelection;
+        readonly changes: readonly { row: number; column: number; value: number }[];
+      } | null,
+      label: string,
+    ) => {
+      if (!document || !edit) return;
+      executeCommand(createGridPatchCommand(document, label, edit.changes));
+      setSelection(edit.selection);
+    },
+    [document, executeCommand],
+  );
+
+  const moveSelection = useCallback(
+    (source: GridSelection, columnDelta: number, rowDelta: number) => {
+      if (!document) return;
+      executeSelectionEdit(
+        moveGridSelection(document.grid, source, columnDelta, rowDelta),
+        "Move selection",
+      );
+    },
+    [document, executeSelectionEdit],
+  );
+
+  const copySelection = useCallback(() => {
+    if (document && selection) setClipboard(copyGridSelection(document.grid, selection));
+  }, [document, selection]);
+
+  const pasteSelection = useCallback(() => {
+    if (!document || !clipboard) return;
+    const maximumLeft = document.grid.columns - clipboard.columns;
+    const maximumTop = document.grid.rows - clipboard.rows;
+    if (maximumLeft < 0 || maximumTop < 0) return;
+    const target = {
+      column: Math.min(maximumLeft, Math.max(0, selection?.left ?? cursor?.column ?? 0)),
+      row: Math.min(maximumTop, Math.max(0, selection?.top ?? cursor?.row ?? 0)),
+    };
+    executeSelectionEdit(pasteGridClipboard(clipboard, target, document.grid), "Paste selection");
+  }, [clipboard, cursor, document, executeSelectionEdit, selection]);
+
+  const deleteSelection = useCallback(() => {
+    if (!document || !selection) return;
+    executeCommand(
+      createGridPatchCommand(
+        document,
+        "Clear selection",
+        clearGridSelection(selection, document.grid),
+      ),
+    );
+  }, [document, executeCommand, selection]);
+
+  const transformSelection = useCallback(
+    (transform: SelectionTransform) => {
+      if (!document || !selection) return;
+      executeSelectionEdit(
+        transformGridSelection(document.grid, selection, transform),
+        transform === "rotateClockwise"
+          ? "Rotate selection"
+          : transform === "flipHorizontal"
+            ? "Flip selection horizontally"
+            : "Flip selection vertically",
+      );
+    },
+    [document, executeSelectionEdit, selection],
+  );
+
+  const applyMaskCorrection = useCallback(
+    (kind: "removeIsolated" | "fillHoles") => {
+      if (!document) return;
+      const changes =
+        kind === "removeIsolated"
+          ? removeIsolatedMaskCells(document.grid, selection)
+          : fillSingleCellMaskHoles(document.grid, selection);
+      executeCommand(
+        createGridPatchCommand(
+          document,
+          kind === "removeIsolated" ? "Remove isolated mask cells" : "Fill single-cell mask holes",
+          changes,
+        ),
+      );
+    },
+    [document, executeCommand, selection],
+  );
 
   if (!document) return null;
+  const symmetry = document.symmetry;
   const selectedColor = document.palette.colors[selectedColorIndex] ?? document.palette.colors[0];
   const usesStroke = ["brush", "eraser", "line", "rectangle", "ellipse"].includes(activeTool);
   const usesFillOption = activeTool === "rectangle" || activeTool === "ellipse";
@@ -238,18 +388,40 @@ export function EditorPage({ onBack }: EditorPageProps) {
         </span>
         <EditorPreferences />
         <button
+          aria-label={t("editor.compare")}
+          className="icon-button"
+          onClick={() => setShowVersionCompare(true)}
+          title={t("editor.compare")}
+          type="button"
+        >
+          <ClockIcon />
+        </button>
+        <button
+          aria-label={t("editor.printPdf")}
+          className="icon-button"
+          onClick={() => setShowPdfExport(true)}
+          title={t("editor.printPdf")}
+          type="button"
+        >
+          <FileIcon />
+        </button>
+        <button
+          aria-label={t("editor.exportCsv")}
           className="button button--secondary editor-export"
           onClick={() => setShowCsvExport(true)}
           type="button"
         >
-          {t("editor.exportCsv")}
+          <TableIcon />
+          <span>{t("editor.exportCsv")}</span>
         </button>
         <button
+          aria-label={t("editor.exportPackage")}
           className="button button--primary editor-export"
           onClick={() => setShowCompleteExport(true)}
           type="button"
         >
-          {t("editor.exportPackage")}
+          <DownloadIcon />
+          <span>{t("editor.exportPackage")}</span>
         </button>
       </header>
 
@@ -278,11 +450,38 @@ export function EditorPage({ onBack }: EditorPageProps) {
             onCursorChange={setCursor}
             onExecute={executeCommand}
             onRedo={redo}
+            onClearSelection={() => setSelection(null)}
+            onCopySelection={copySelection}
+            onDeleteSelection={deleteSelection}
+            onMoveSelection={moveSelection}
+            onPasteSelection={pasteSelection}
+            onSelectionChange={setSelection}
             onUndo={undo}
             onZoomChange={setZoom}
             ref={canvasRef}
             revision={revision}
+            selection={selection}
+            symmetry={symmetry}
+            differences={comparison?.result.differences ?? []}
           />
+          {comparison ? (
+            <div className="comparison-overlay" role="status">
+              <span>
+                <strong>{t("compare.overlayTitle")}</strong>
+                <small>{comparison.fileName}</small>
+              </span>
+              <span data-kind="added">+{comparison.result.added}</span>
+              <span data-kind="removed">−{comparison.result.removed}</span>
+              <span data-kind="changed">~{comparison.result.changed}</span>
+              <button
+                aria-label={t("compare.clearOverlay")}
+                onClick={() => setComparisonReference(null)}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+          ) : null}
         </section>
 
         <aside aria-label={t("editor.inspector")} className="inspector">
@@ -304,6 +503,81 @@ export function EditorPage({ onBack }: EditorPageProps) {
                 </span>
               </div>
             ) : null}
+          </section>
+
+          <section className="inspector-section">
+            <div className="inspector-heading">
+              <span>{t("editor.symmetryDrawing")}</span>
+              <strong>{t(SYMMETRY_LABEL_KEYS[symmetry.type])}</strong>
+            </div>
+            <select
+              aria-label={t("editor.symmetryDrawing")}
+              className="inspector-select"
+              onChange={(event) => {
+                const type = event.target.value as SymmetryType;
+                executeCommand(
+                  createSymmetryCommand(
+                    document,
+                    symmetrySettings(type, document.grid.columns, document.grid.rows),
+                  ),
+                );
+              }}
+              value={symmetry.type}
+            >
+              <option value="none">{t("image.symmetryNone")}</option>
+              <option value="vertical">{t("image.symmetryVertical")}</option>
+              <option value="horizontal">{t("image.symmetryHorizontal")}</option>
+              <option value="central">{t("image.symmetryCentral")}</option>
+            </select>
+            <p className="inspector-note inspector-note--spaced">{t("editor.symmetryHint")}</p>
+          </section>
+
+          {selection ? (
+            <section className="inspector-section selection-panel">
+              <div className="inspector-heading">
+                <span>{t("editor.selection")}</span>
+                <strong>
+                  {selectionWidth(selection)} × {selectionHeight(selection)}
+                </strong>
+              </div>
+              <div className="inspector-action-grid">
+                <button onClick={copySelection} type="button">
+                  {t("editor.copy")}
+                </button>
+                <button disabled={!clipboard} onClick={pasteSelection} type="button">
+                  {t("editor.paste")}
+                </button>
+                <button onClick={() => transformSelection("rotateClockwise")} type="button">
+                  {t("editor.rotate")}
+                </button>
+                <button onClick={() => transformSelection("flipHorizontal")} type="button">
+                  {t("editor.flipHorizontal")}
+                </button>
+                <button onClick={() => transformSelection("flipVertical")} type="button">
+                  {t("editor.flipVertical")}
+                </button>
+                <button data-danger="true" onClick={deleteSelection} type="button">
+                  {t("editor.clearSelectionCells")}
+                </button>
+              </div>
+              <p className="inspector-note inspector-note--spaced">{t("editor.selectionHint")}</p>
+            </section>
+          ) : null}
+
+          <section className="inspector-section mask-panel">
+            <div className="inspector-heading">
+              <span>{t("editor.maskCorrection")}</span>
+              <strong>{selection ? t("editor.selectionScope") : t("editor.canvasScope")}</strong>
+            </div>
+            <div className="inspector-action-grid">
+              <button onClick={() => applyMaskCorrection("removeIsolated")} type="button">
+                {t("editor.removeIsolated")}
+              </button>
+              <button onClick={() => applyMaskCorrection("fillHoles")} type="button">
+                {t("editor.fillSingleHoles")}
+              </button>
+            </div>
+            <p className="inspector-note inspector-note--spaced">{t("editor.maskHint")}</p>
           </section>
 
           <section className="inspector-section">
@@ -418,6 +692,19 @@ export function EditorPage({ onBack }: EditorPageProps) {
       ) : null}
       {showCompleteExport ? (
         <CompleteExportDialog document={document} onClose={() => setShowCompleteExport(false)} />
+      ) : null}
+      {showPdfExport ? (
+        <BoardPdfDialog document={document} onClose={() => setShowPdfExport(false)} />
+      ) : null}
+      {showVersionCompare ? (
+        <VersionCompareDialog
+          document={document}
+          onApply={(grid, fileName) => {
+            setComparisonReference({ grid, fileName });
+            setShowVersionCompare(false);
+          }}
+          onClose={() => setShowVersionCompare(false)}
+        />
       ) : null}
     </div>
   );
