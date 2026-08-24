@@ -25,18 +25,34 @@ interface ActionCardProps {
   title: string;
   description: string;
   accent: "violet" | "mint" | "peach";
-  unavailableLabel: string;
+  statusLabel: string;
+  disabled?: boolean;
+  onClick?: () => void;
 }
 
-function ActionCard({ icon, title, description, accent, unavailableLabel }: ActionCardProps) {
+function ActionCard({
+  icon,
+  title,
+  description,
+  accent,
+  statusLabel,
+  disabled = false,
+  onClick,
+}: ActionCardProps) {
   return (
-    <button className="action-card" data-accent={accent} type="button" disabled>
+    <button
+      className="action-card"
+      data-accent={accent}
+      disabled={disabled}
+      onClick={onClick}
+      type="button"
+    >
       <span className="action-card__icon">{icon}</span>
       <span className="action-card__content">
         <strong>{title}</strong>
         <span>{description}</span>
       </span>
-      <span className="action-card__status">{unavailableLabel}</span>
+      <span className="action-card__status">{statusLabel}</span>
       <ArrowIcon className="action-card__arrow" />
     </button>
   );
@@ -48,7 +64,11 @@ interface ThemeOption {
   icon: ReactNode;
 }
 
-export function StartPage() {
+interface StartPageProps {
+  readonly onCreateBlank: () => void;
+}
+
+export function StartPage({ onCreateBlank }: StartPageProps) {
   const { t } = useTranslation();
   const locale = useSettingsStore((state) => state.locale);
   const theme = useSettingsStore((state) => state.theme);
@@ -214,22 +234,25 @@ export function StartPage() {
               accent="violet"
               description={t("actions.new.description")}
               icon={<PlusIcon />}
+              onClick={onCreateBlank}
+              statusLabel={t("status.available")}
               title={t("actions.new.title")}
-              unavailableLabel={t("status.nextStep")}
             />
             <ActionCard
               accent="mint"
               description={t("actions.image.description")}
+              disabled
               icon={<ImageIcon />}
               title={t("actions.image.title")}
-              unavailableLabel={t("status.planned")}
+              statusLabel={t("status.planned")}
             />
             <ActionCard
               accent="peach"
               description={t("actions.csv.description")}
+              disabled
               icon={<TableIcon />}
               title={t("actions.csv.title")}
-              unavailableLabel={t("status.planned")}
+              statusLabel={t("status.planned")}
             />
           </div>
         </section>

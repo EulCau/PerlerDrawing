@@ -5,6 +5,7 @@ import "./i18n/config";
 import "./styles/tokens.css";
 import "./styles/global.css";
 import "./styles/start-page.css";
+import "./styles/editor.css";
 
 const root = document.getElementById("root");
 

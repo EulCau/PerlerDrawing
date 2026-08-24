@@ -81,3 +81,134 @@ export function ClockIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function BackIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+  );
+}
+
+export function UndoIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="M9 7 4 12l5 5" />
+      <path d="M5 12h8a6 6 0 0 1 6 6" />
+    </svg>
+  );
+}
+
+export function RedoIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="m15 7 5 5-5 5" />
+      <path d="M19 12h-8a6 6 0 0 0-6 6" />
+    </svg>
+  );
+}
+
+export function ZoomInIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="m15.5 15.5 4 4M10.5 7.5v6M7.5 10.5h6" />
+    </svg>
+  );
+}
+
+export function ZoomOutIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="m15.5 15.5 4 4M7.5 10.5h6" />
+    </svg>
+  );
+}
+
+export function FitIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />
+      <rect x="8" y="8" width="8" height="8" rx="1" />
+    </svg>
+  );
+}
+
+export function BrushIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="m14 5 5-2 2 2-2 5-9 9-5 1 1-5 8-10Z" />
+      <path d="m13 7 4 4M4 21c1.5-1.5 3.1-1.8 5-1" />
+    </svg>
+  );
+}
+
+export function EraserIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="m8.2 18.5-4.7-4.7a2 2 0 0 1 0-2.8l7.5-7.5a2 2 0 0 1 2.8 0l6.7 6.7a2 2 0 0 1 0 2.8L15 18.5H8.2Z" />
+      <path d="m8 8 8 8M8.2 18.5H21" />
+    </svg>
+  );
+}
+
+export function EyedropperIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="m13 5 2-2a2.1 2.1 0 0 1 3 0l3 3a2.1 2.1 0 0 1 0 3l-2 2" />
+      <path d="m10 8 6 6-8 8H3v-5l7-9ZM5 17l2 2" />
+    </svg>
+  );
+}
+
+export function FillIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="m4 13 8-8 7 7-8 8H4v-7Z" />
+      <path d="m8 9 6 6M19 16s2 2.2 2 3.5a2 2 0 0 1-4 0C17 18.2 19 16 19 16Z" />
+    </svg>
+  );
+}
+
+export function LineIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="m5 19 14-14" />
+      <circle cx="5" cy="19" r="1.5" />
+      <circle cx="19" cy="5" r="1.5" />
+    </svg>
+  );
+}
+
+export function RectangleIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <rect x="4" y="5" width="16" height="14" rx="1.5" />
+    </svg>
+  );
+}
+
+export function EllipseIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <ellipse cx="12" cy="12" rx="8.5" ry="6.5" />
+    </svg>
+  );
+}
+
+export function HandIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="M8 11V6.5a1.5 1.5 0 0 1 3 0V10M11 9V5.5a1.5 1.5 0 0 1 3 0V10M14 9V7a1.5 1.5 0 0 1 3 0v4M17 10v-.5a1.5 1.5 0 0 1 3 0V15c0 4-3 7-7 7h-1c-2.5 0-4.3-1.4-5.5-3.3L3.8 14a1.7 1.7 0 0 1 2.8-1.9L8 14" />
+    </svg>
+  );
+}
+
+export function CloseIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+  );
+}
