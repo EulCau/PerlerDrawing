@@ -35,6 +35,14 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "resources": {
+      "../python/sidecar.py": "python/sidecar.py",
+      "../python/perlerdrawing_sidecar/__init__.py": "python/perlerdrawing_sidecar/__init__.py",
+      "../python/perlerdrawing_sidecar/color.py": "python/perlerdrawing_sidecar/color.py",
+      "../python/perlerdrawing_sidecar/exporter.py": "python/perlerdrawing_sidecar/exporter.py",
+      "../python/perlerdrawing_sidecar/imaging.py": "python/perlerdrawing_sidecar/imaging.py",
+      "../python/perlerdrawing_sidecar/protocol.py": "python/perlerdrawing_sidecar/protocol.py"
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

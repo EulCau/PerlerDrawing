@@ -1,6 +1,6 @@
 # PerlerDrawing Desktop
 
-跨平台拼豆图纸制作应用. 当前已经完成桌面基础壳, 编辑器核心模型, Canvas 编辑器和 CSV 工作流, 包含 Tauri 2, React, TypeScript strict, 中英文与主题切换, `Uint16Array` 网格, 命令历史, MARD 221 v1 registry, 分层 Canvas, 基础绘制工具以及严格的 CSV round-trip 校验.
+跨平台拼豆图纸制作应用. 当前已经完成桌面基础壳, 编辑器核心模型, Canvas 编辑器, CSV 工作流, 高分辨率图片转换和完整交付导出. 图片处理包含边界连通去背景, Haar 小波结构简化, Lab 聚类, 预乘 alpha 栅格化和真实 MARD 色卡量化.
 
 详细方案见 [docs/product-requirements-and-technical-plan.md](docs/product-requirements-and-technical-plan.md).
 逐步实施状态见 [docs/implementation-plan.md](docs/implementation-plan.md).
@@ -54,4 +54,4 @@ desktop_app/
 
 ## 下一步
 
-实现图片转换和完整交付导出, 包含高分辨率母图, 预乘 alpha 重采样, MARD 量化, PNG, inventory, metadata, tiles 和 `.tar.gz`. GitHub Actions 仍按技术方案要求, 在安装包阶段加入, 不提交不可执行的占位 workflow.
+实现可选 Codex CLI 隔离任务, Windows NSIS, Arch Linux 软件包和 GitHub Actions 发布流水线. 安装包阶段会把 Python sidecar 构建为平台原生可执行文件, 不要求最终用户安装 Python.
