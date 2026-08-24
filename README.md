@@ -7,6 +7,7 @@
 ```text
 PerlerBeads/
 ├── AGENTS.md
+├── desktop_app/          # 跨平台拼豆图纸桌面应用规划和后续代码
 ├── palettes/
 │   └── mard_221_v1.json
 ├── scripts/
@@ -37,3 +38,7 @@ conda run -n perler-beads python scripts/make_perler_pattern.py --input projects
 ```
 
 该脚本在最终网格生成后测量拼豆外接矩形, 并自动创建规范名称的图纸目录. 去背景, 去外包边, 对称校正和结构简化仍应先在母图阶段完成, 并在量化后再次校验.
+
+## 桌面应用
+
+桌面应用的需求和技术路线见 [desktop_app/docs/product-requirements-and-technical-plan.md](desktop_app/docs/product-requirements-and-technical-plan.md). 当前阶段已经建立独立目录和方案文档, 尚未创建应用脚手架或不可执行的占位 workflow.
