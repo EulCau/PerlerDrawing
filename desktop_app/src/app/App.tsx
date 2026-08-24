@@ -21,14 +21,14 @@ export function App() {
 
   const openNewPattern = (document: PatternDocument) => {
     documentStore.getState().openDocument(document);
-    editorStore.getState().resetForDocument();
+    editorStore.getState().resetForDocument(document);
     setShowNewPattern(false);
     setView("editor");
   };
 
   const openImportedPattern = (document: PatternDocument) => {
     documentStore.getState().openDocument(document);
-    editorStore.getState().resetForDocument();
+    editorStore.getState().resetForDocument(document);
     setShowCsvImport(false);
     setView("editor");
   };

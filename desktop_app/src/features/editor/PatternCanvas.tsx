@@ -207,6 +207,7 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
     const { t } = useTranslation();
     const activeTool = useEditorStore((state) => state.activeTool);
     const selectedColorIndex = useEditorStore((state) => state.selectedColorIndex);
+    const addedColorIndices = useEditorStore((state) => state.addedColorIndices);
     const strokeWidth = useEditorStore((state) => state.strokeWidth);
     const shapeFilled = useEditorStore((state) => state.shapeFilled);
     const setActiveTool = useEditorStore((state) => state.setActiveTool);
@@ -231,6 +232,10 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
     const [previewErasing, setPreviewErasing] = useState(false);
     const [spacePan, setSpacePan] = useState(false);
     const [isPanning, setIsPanning] = useState(false);
+    const selectedPaintIndex =
+      selectedColorIndex !== null && addedColorIndices.includes(selectedColorIndex)
+        ? selectedColorIndex
+        : null;
 
     documentRef.current = document;
     viewportRef.current = viewport;
@@ -342,7 +347,10 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
 
     useEffect(() => {
       const canvas = interactionCanvasRef.current;
-      const color = document.palette.colors[selectedColorIndex]?.hex ?? "#000000";
+      const color =
+        selectedPaintIndex === null
+          ? "#000000"
+          : (document.palette.colors[selectedPaintIndex]?.hex ?? "#000000");
       if (!canvas || size.width <= 0 || size.height <= 0) return;
       renderInteractionCanvas(
         canvas,
@@ -362,7 +370,7 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
       hover,
       preview,
       previewErasing,
-      selectedColorIndex,
+      selectedPaintIndex,
       selection,
       size,
       themeMode,
@@ -446,7 +454,11 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
 
       if (activeTool === "eyedropper") {
         const value = getCell(currentDocument.grid, point.row, point.column);
-        if (value !== EMPTY_CELL && value < currentDocument.palette.colors.length) {
+        if (
+          value !== EMPTY_CELL &&
+          value < currentDocument.palette.colors.length &&
+          addedColorIndices.includes(value)
+        ) {
           setSelectedColorIndex(value);
           setActiveTool("brush");
         }
@@ -454,12 +466,14 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
       }
 
       if (activeTool === "fill") {
-        const points = floodFillCells(currentDocument.grid, point, selectedColorIndex);
-        commitPoints(points, selectedColorIndex, "Fill region");
+        if (selectedPaintIndex === null) return;
+        const points = floodFillCells(currentDocument.grid, point, selectedPaintIndex);
+        commitPoints(points, selectedPaintIndex, "Fill region");
         return;
       }
 
       if (activeTool === "brush" || activeTool === "eraser") {
+        if (activeTool === "brush" && selectedPaintIndex === null) return;
         const points = new Map<string, GridPoint>();
         for (const stampedPoint of symmetricPoints(
           clipPoints(rasterizeLine(point, point, strokeWidth), currentDocument),
@@ -482,6 +496,7 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
       }
 
       if (activeTool === "line" || activeTool === "rectangle" || activeTool === "ellipse") {
+        if (selectedPaintIndex === null) return;
         const points = symmetricPoints(
           clipPoints(
             shapePoints(activeTool, point, point, strokeWidth, shapeFilled),
@@ -566,13 +581,21 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
       setIsPanning(false);
 
       if (gesture.kind === "stroke") {
+        const value = gesture.erasing ? EMPTY_CELL : selectedPaintIndex;
+        if (value === null) {
+          setPreview([]);
+          setPreviewErasing(false);
+          return;
+        }
         commitPoints(
           [...gesture.points.values()],
-          gesture.erasing ? EMPTY_CELL : selectedColorIndex,
+          value,
           gesture.erasing ? "Erase stroke" : "Brush stroke",
         );
       } else if (gesture.kind === "shape") {
-        commitPoints(gesture.points, selectedColorIndex, `Draw ${gesture.tool}`);
+        if (selectedPaintIndex !== null) {
+          commitPoints(gesture.points, selectedPaintIndex, `Draw ${gesture.tool}`);
+        }
       } else if (gesture.kind === "selection-move") {
         onMoveSelection(
           gesture.original,

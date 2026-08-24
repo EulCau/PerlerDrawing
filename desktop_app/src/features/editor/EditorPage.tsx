@@ -25,6 +25,7 @@ import {
   HandIcon,
   LineIcon,
   MoonIcon,
+  PlusIcon,
   RectangleIcon,
   RedoIcon,
   SelectionIcon,
@@ -59,6 +60,7 @@ import {
   removeIsolatedMaskCells,
 } from "../../editor/tools/mask-correction";
 import { PatternCanvas, type PatternCanvasHandle } from "./PatternCanvas";
+import { AddColorDialog } from "./AddColorDialog";
 import { CsvExportDialog } from "../csv/CsvExportDialog";
 import { CompleteExportDialog } from "../export/CompleteExportDialog";
 import { BoardPdfDialog } from "../export/BoardPdfDialog";
@@ -175,16 +177,18 @@ export function EditorPage({ onBack }: EditorPageProps) {
   const redo = useDocumentStore((state) => state.redo);
   const activeTool = useEditorStore((state) => state.activeTool);
   const selectedColorIndex = useEditorStore((state) => state.selectedColorIndex);
+  const addedColorIndices = useEditorStore((state) => state.addedColorIndices);
   const strokeWidth = useEditorStore((state) => state.strokeWidth);
   const shapeFilled = useEditorStore((state) => state.shapeFilled);
   const setActiveTool = useEditorStore((state) => state.setActiveTool);
   const setSelectedColorIndex = useEditorStore((state) => state.setSelectedColorIndex);
+  const addColorIndex = useEditorStore((state) => state.addColorIndex);
   const setStrokeWidth = useEditorStore((state) => state.setStrokeWidth);
   const setShapeFilled = useEditorStore((state) => state.setShapeFilled);
   const canvasRef = useRef<PatternCanvasHandle>(null);
   const [cursor, setCursor] = useState<GridPoint | null>(null);
   const [zoom, setZoom] = useState(100);
-  const [paletteQuery, setPaletteQuery] = useState("");
+  const [showAddColor, setShowAddColor] = useState(false);
   const [showCsvExport, setShowCsvExport] = useState(false);
   const [showCompleteExport, setShowCompleteExport] = useState(false);
   const [showPdfExport, setShowPdfExport] = useState(false);
@@ -200,16 +204,16 @@ export function EditorPage({ onBack }: EditorPageProps) {
     [document],
   );
 
-  const filteredColors = useMemo(() => {
-    if (!document) return [];
-    const query = paletteQuery.trim().toLocaleUpperCase();
-    if (!query) return document.palette.colors.map((color, index) => ({ color, index }));
-    return document.palette.colors
-      .map((color, index) => ({ color, index }))
-      .filter(({ color }) =>
-        `${color.code} ${color.name ?? ""} ${color.hex}`.toLocaleUpperCase().includes(query),
-      );
-  }, [document, paletteQuery]);
+  const addedColors = useMemo(
+    () =>
+      document
+        ? addedColorIndices.flatMap((index) => {
+            const color = document.palette.colors[index];
+            return color ? [{ color, index }] : [];
+          })
+        : [],
+    [addedColorIndices, document],
+  );
   const comparison = useMemo(
     () =>
       document && comparisonReference
@@ -309,7 +313,8 @@ export function EditorPage({ onBack }: EditorPageProps) {
 
   if (!document) return null;
   const symmetry = document.symmetry;
-  const selectedColor = document.palette.colors[selectedColorIndex] ?? document.palette.colors[0];
+  const selectedColor =
+    selectedColorIndex === null ? null : document.palette.colors[selectedColorIndex];
   const usesStroke = ["brush", "eraser", "line", "rectangle", "ellipse"].includes(activeTool);
   const usesFillOption = activeTool === "rectangle" || activeTool === "ellipse";
 
@@ -502,7 +507,12 @@ export function EditorPage({ onBack }: EditorPageProps) {
                   <small>{selectedColor.name ?? selectedColor.hex}</small>
                 </span>
               </div>
-            ) : null}
+            ) : (
+              <div className="current-color-empty">
+                <strong>{t("editor.noAddedColors")}</strong>
+                <span>{t("editor.noAddedColorsHint")}</span>
+              </div>
+            )}
           </section>
 
           <section className="inspector-section">
@@ -616,34 +626,43 @@ export function EditorPage({ onBack }: EditorPageProps) {
           <section className="inspector-section inspector-section--palette">
             <div className="inspector-heading">
               <span>{t("editor.palette")}</span>
-              <strong>{document.palette.colors.length}</strong>
+              <strong>
+                {addedColorIndices.length} / {document.palette.colors.length}
+              </strong>
             </div>
-            <input
-              aria-label={t("editor.searchColors")}
-              className="palette-search"
-              onChange={(event) => setPaletteQuery(event.target.value)}
-              placeholder={t("editor.searchColors")}
-              type="search"
-              value={paletteQuery}
-            />
-            <div className="palette-grid" role="listbox" aria-label={document.palette.name}>
-              {filteredColors.map(({ color, index }) => (
-                <button
-                  aria-label={`${color.code} ${color.name ?? color.hex}`}
-                  aria-selected={selectedColorIndex === index}
-                  className="palette-swatch"
-                  key={color.code}
-                  onClick={() => setSelectedColorIndex(index)}
-                  role="option"
-                  style={{ "--swatch-color": color.hex } as CSSProperties}
-                  title={`${color.code} · ${color.hex}`}
-                  type="button"
-                >
-                  <span aria-hidden="true" />
-                  <small>{color.code}</small>
-                </button>
-              ))}
-            </div>
+            <button
+              className="button button--secondary palette-add-button"
+              onClick={() => setShowAddColor(true)}
+              type="button"
+            >
+              <PlusIcon />
+              {t("editor.addColor")}
+            </button>
+            {addedColors.length > 0 ? (
+              <div className="palette-grid" role="listbox" aria-label={t("editor.addedColors")}>
+                {addedColors.map(({ color, index }) => (
+                  <button
+                    aria-label={`${color.code} ${color.name ?? color.hex}`}
+                    aria-selected={selectedColorIndex === index}
+                    className="palette-swatch"
+                    key={color.code}
+                    onClick={() => setSelectedColorIndex(index)}
+                    role="option"
+                    style={{ "--swatch-color": color.hex } as CSSProperties}
+                    title={`${color.code} · ${color.hex}`}
+                    type="button"
+                  >
+                    <span aria-hidden="true" />
+                    <small>{color.code}</small>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="palette-empty-state">
+                <strong>{t("editor.noAddedColors")}</strong>
+                <span>{t("editor.paletteEmptyHint")}</span>
+              </div>
+            )}
           </section>
 
           <section className="inspector-section document-facts">
@@ -704,6 +723,18 @@ export function EditorPage({ onBack }: EditorPageProps) {
             setShowVersionCompare(false);
           }}
           onClose={() => setShowVersionCompare(false)}
+        />
+      ) : null}
+      {showAddColor ? (
+        <AddColorDialog
+          addedColorIndices={addedColorIndices}
+          onAdd={(index) => {
+            addColorIndex(index);
+            setShowAddColor(false);
+            canvasRef.current?.focus();
+          }}
+          onClose={() => setShowAddColor(false)}
+          palette={document.palette}
         />
       ) : null}
     </div>

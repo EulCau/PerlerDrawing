@@ -1,8 +1,9 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import i18n from "../i18n/config";
 import { documentStore } from "./document-store";
+import { editorStore } from "./editor-store";
 import { useSettingsStore } from "./settings-store";
 import { App } from "./App";
 
@@ -61,6 +62,34 @@ describe("application preferences", () => {
       rows: 29,
       subdivision: 5,
     });
+  });
+
+  it("adds paint colors through the palette dialog", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /新建空白图纸/ }));
+    await user.click(screen.getByRole("button", { name: "创建并进入编辑器" }));
+
+    expect(screen.getAllByText("尚未添加颜色")).toHaveLength(2);
+    expect(editorStore.getState().selectedColorIndex).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "添加颜色" }));
+    expect(screen.getByRole("dialog", { name: "添加颜色" })).toBeVisible();
+    const addSelected = screen.getByRole("button", { name: "添加所选颜色" });
+    expect(addSelected).toBeDisabled();
+
+    await user.click(screen.getByRole("option", { name: "A1 #FAF5CD" }));
+    expect(addSelected).toBeEnabled();
+    await user.click(addSelected);
+
+    const addedColors = screen.getByRole("listbox", { name: "可用于绘制的颜色" });
+    expect(within(addedColors).getByRole("option", { name: "A1 #FAF5CD" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(editorStore.getState().addedColorIndices).toEqual([0]);
+    expect(editorStore.getState().selectedColorIndex).toBe(0);
   });
 
   it("opens CSV import as a validation-first workflow", async () => {

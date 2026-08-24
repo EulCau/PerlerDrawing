@@ -1,6 +1,6 @@
 pkgname=perlerdrawing-desktop
 pkgver=0.1.0
-pkgrel=2
+pkgrel=3
 pkgdesc='Offline-first fuse-bead pattern editor'
 arch=('x86_64')
 license=('custom:unspecified')
