@@ -51,6 +51,8 @@ cd packaging/arch
 makepkg --cleanbuild --noconfirm
 ```
 
+Linux 启动时默认禁用 WebKitGTK 的 DMA-BUF 渲染器, 以避免部分 Wayland 和 NVIDIA 组合发生协议错误. 如需显式恢复该渲染器, 可在启动前设置 `WEBKIT_DISABLE_DMABUF_RENDERER=0`.
+
 `app-v*` 标签会触发 `.github/workflows/desktop-release.yml`, 分别在 Windows 和 Arch 环境构建 sidecar 与安装包, 生成 SHA-256 清单后创建 GitHub Release.
 
 ## 目录

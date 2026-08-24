@@ -14,6 +14,22 @@ use tauri::{AppHandle, Emitter, Manager, State};
 
 const SIDECAR_EVENT: &str = "perlerdrawing://sidecar-event";
 
+#[cfg(target_os = "linux")]
+fn linux_webkit_dmabuf_default(current_value: Option<&std::ffi::OsStr>) -> Option<&'static str> {
+    current_value.is_none().then_some("1")
+}
+
+#[cfg(target_os = "linux")]
+fn configure_linux_webkit_environment() {
+    let current_value = std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER");
+    if let Some(value) = linux_webkit_dmabuf_default(current_value.as_deref()) {
+        // WebKitGTK's DMA-BUF renderer can terminate the web process on some
+        // Wayland/NVIDIA configurations. Keep native Wayland and use its
+        // shared-memory renderer unless the user explicitly chose otherwise.
+        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", value);
+    }
+}
+
 #[derive(Default)]
 struct SidecarState {
     jobs: Arc<Mutex<HashMap<String, Arc<Mutex<Child>>>>>,
@@ -441,6 +457,9 @@ fn read_job_asset(
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    #[cfg(target_os = "linux")]
+    configure_linux_webkit_environment();
+
     tauri::Builder::default()
         .manage(SidecarState::default())
         .manage(codex::CodexState::default())
@@ -458,4 +477,21 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running PerlerDrawing Desktop");
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod tests {
+    use super::linux_webkit_dmabuf_default;
+    use std::ffi::OsStr;
+
+    #[test]
+    fn disables_webkit_dmabuf_by_default() {
+        assert_eq!(linux_webkit_dmabuf_default(None), Some("1"));
+    }
+
+    #[test]
+    fn preserves_an_explicit_webkit_dmabuf_setting() {
+        assert_eq!(linux_webkit_dmabuf_default(Some(OsStr::new("0"))), None);
+        assert_eq!(linux_webkit_dmabuf_default(Some(OsStr::new("1"))), None);
+    }
 }
