@@ -1251,6 +1251,105 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.codex-integration {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-accent) 7%, transparent),
+      transparent 68%
+    ),
+    var(--color-surface);
+}
+
+.codex-status-row {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.codex-status-row strong {
+  color: var(--color-text-muted);
+  font-size: 9px;
+  text-align: right;
+}
+
+.codex-experimental {
+  display: inline-flex;
+  padding: 5px 7px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, transparent);
+  border-radius: 999px;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.codex-toggle {
+  margin: 0;
+}
+
+.codex-toggle:has(input:disabled) {
+  color: var(--color-text-subtle);
+}
+
+.codex-privacy-note {
+  margin: 0;
+  color: var(--color-text-subtle);
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.codex-plan-result,
+.codex-live-status {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--color-success) 24%, transparent);
+  border-radius: 10px;
+  color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.codex-live-status {
+  border-color: color-mix(in srgb, var(--color-accent) 24%, transparent);
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.codex-plan-result strong,
+.codex-live-status strong {
+  font-size: 9px;
+}
+
+.codex-plan-result small,
+.codex-live-status small {
+  color: var(--color-text-muted);
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+.codex-consent-dialog {
+  width: min(650px, 100%);
+}
+
+.codex-consent-list {
+  display: grid;
+  gap: 10px;
+  margin: 22px 0;
+  padding: 16px 18px 16px 34px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.codex-consent-list li::marker {
+  color: var(--color-accent);
+}
+
 .image-settings-panel > .form-error,
 .image-settings-panel > .image-runtime-note,
 .image-settings-panel > .image-progress,

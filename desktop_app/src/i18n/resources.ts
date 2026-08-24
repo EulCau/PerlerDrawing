@@ -9,8 +9,9 @@ export const resources = {
       status: {
         offline: "离线优先",
         available: "可用",
-        foundationTitle: "图片转换和完整导出已就绪",
-        foundationDescription: "高分辨率母图, 结构保真量化和可验证交付包均在本地生成.",
+        foundationTitle: "Codex 集成和原生安装包已就绪",
+        foundationDescription:
+          "本地转换保持独立可用, Codex 默认关闭, Windows 和 Arch 使用各自平台构建的 sidecar.",
         nextStep: "下一步",
         planned: "计划中",
       },
@@ -71,7 +72,7 @@ export const resources = {
       },
       footer: {
         privacy: "默认离线处理. 图片不会被自动上传.",
-        version: "图片转换工作流 v0.1.0",
+        version: "Codex 与安装包工作流 v0.1.0",
       },
       newPattern: {
         eyebrow: "空白图纸",
@@ -273,6 +274,34 @@ export const resources = {
           parameters: "板子, 分块或随机种子参数无效.",
         },
       },
+      codex: {
+        title: "Codex 辅助分析",
+        description: "可选地让本机 Codex CLI 先为本地转换器制定受限参数计划.",
+        experimental: "实验性, 默认关闭",
+        statusChecking: "正在检测 Codex CLI...",
+        statusReady: "{{version}} 可用",
+        statusMissing: "未检测到 Codex CLI",
+        statusIncompatible: "Codex CLI 缺少所需的非交互参数",
+        enable: "使用本机 Codex CLI 分析这张图片",
+        privacy:
+          "启用后, 任务图片副本会交给用户已登录的 Codex CLI. Codex 只写入隔离临时仓库, 最终图纸仍由本地处理器生成和校验.",
+        consentTitle: "确认 Codex 任务边界",
+        consentDescription:
+          "这是一次外部 AI 处理. 确认后, 应用会记住此选择, 但每个任务仍需保持 Codex 开关开启.",
+        consentImage: "只复制当前图片, MARD 色卡和处理参数到独立临时 Git 仓库.",
+        consentWorkspace: "Codex 使用 workspace-write, 只允许在该临时仓库内写入.",
+        consentNetwork: "图片和任务说明可能通过 Codex CLI 发送到其连接的模型服务.",
+        consentCredentials: "应用不读取, 复制或展示 Codex 登录凭据.",
+        consentAccept: "理解并启用",
+        planApplied: "已应用 {{version}} 的受限参数计划",
+        localFallback: "Codex 未完成, 已安全回退到原参数和本地处理器.",
+        liveStage: "最近事件: {{stage}}",
+        liveDetail: "{{count}} 个 JSONL 事件 · 已运行 {{seconds}} 秒",
+        progress: {
+          starting: "正在创建隔离 Codex 任务",
+          analyzing: "Codex 正在分析结构并生成受限参数计划",
+        },
+      },
       export: {
         eyebrow: "完整交付",
         title: "导出经过统一验证的交付包",
@@ -325,9 +354,9 @@ export const resources = {
       status: {
         offline: "Offline first",
         available: "Available",
-        foundationTitle: "Image conversion and complete export are ready",
+        foundationTitle: "Codex integration and native packages are ready",
         foundationDescription:
-          "High-resolution masters, structure-preserving quantization, and validated delivery packages are generated locally.",
+          "Local conversion remains independent, Codex is off by default, and Windows and Arch use platform-native sidecars.",
         nextStep: "Next step",
         planned: "Planned",
       },
@@ -389,7 +418,7 @@ export const resources = {
       },
       footer: {
         privacy: "Offline by default. Images are never uploaded automatically.",
-        version: "Image conversion workflow v0.1.0",
+        version: "Codex and packaging workflow v0.1.0",
       },
       newPattern: {
         eyebrow: "Blank pattern",
@@ -600,6 +629,39 @@ export const resources = {
           processing_failed: "Image processing failed. The source image was not modified.",
           colorCount: "Color count must be an integer from 2 to 64.",
           parameters: "The board, subdivision, or random seed setting is invalid.",
+        },
+      },
+      codex: {
+        title: "Codex-assisted analysis",
+        description:
+          "Optionally ask the local Codex CLI to prepare a bounded parameter plan for the local converter.",
+        experimental: "Experimental and off by default",
+        statusChecking: "Detecting Codex CLI...",
+        statusReady: "{{version}} available",
+        statusMissing: "Codex CLI was not detected",
+        statusIncompatible: "Codex CLI is missing required non-interactive flags",
+        enable: "Use the local Codex CLI to analyze this image",
+        privacy:
+          "When enabled, a task copy of the image is given to the user's signed-in Codex CLI. Codex can write only in an isolated temporary repository; the local processor still generates and validates the final pattern.",
+        consentTitle: "Confirm the Codex task boundary",
+        consentDescription:
+          "This is external AI processing. The app remembers this confirmation, while the Codex switch must still be enabled for each task.",
+        consentImage:
+          "Only the current image, MARD palette, and processing parameters are copied to a separate temporary Git repository.",
+        consentWorkspace:
+          "Codex runs with workspace-write and can write only inside that temporary repository.",
+        consentNetwork:
+          "The image and task instructions may be sent through Codex CLI to its connected model service.",
+        consentCredentials: "The app never reads, copies, or displays Codex login credentials.",
+        consentAccept: "Understand and enable",
+        planApplied: "Applied a bounded parameter plan from {{version}}",
+        localFallback:
+          "Codex did not complete; the app safely fell back to the original parameters and local processor.",
+        liveStage: "Latest event: {{stage}}",
+        liveDetail: "{{count}} JSONL events · {{seconds}} seconds elapsed",
+        progress: {
+          starting: "Creating an isolated Codex task",
+          analyzing: "Codex is analyzing structure and producing a bounded parameter plan",
         },
       },
       export: {

@@ -25,4 +25,14 @@ describe("image import page", () => {
     await user.click(screen.getByRole("button", { name: /返回启动页/ }));
     expect(onBack).toHaveBeenCalledOnce();
   });
+
+  it("keeps optional Codex analysis disabled when the CLI is unavailable", async () => {
+    render(<ImageImportPage onBack={vi.fn()} onImport={vi.fn()} />);
+
+    expect(await screen.findByText("未检测到 Codex CLI")).toBeVisible();
+    expect(
+      screen.getByRole("checkbox", { name: "使用本机 Codex CLI 分析这张图片" }),
+    ).toBeDisabled();
+    expect(screen.getByText("实验性, 默认关闭")).toBeVisible();
+  });
 });

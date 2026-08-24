@@ -1,10 +1,12 @@
+mod codex;
+
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::{
     collections::HashMap,
     fs,
-    io::{BufRead, BufReader, Write},
-    path::PathBuf,
+    io::{BufRead, BufReader},
+    path::{Path, PathBuf},
     process::{Child, Command, Stdio},
     sync::{Arc, Mutex},
 };
@@ -38,7 +40,7 @@ struct SidecarEvent {
     event: Value,
 }
 
-fn validate_job_id(job_id: &str) -> Result<(), SidecarFailure> {
+pub(crate) fn validate_job_id(job_id: &str) -> Result<(), SidecarFailure> {
     if job_id.is_empty()
         || job_id.len() > 80
         || !job_id
@@ -60,7 +62,10 @@ fn jobs_root(app: &AppHandle) -> Result<PathBuf, SidecarFailure> {
         .map_err(|error| SidecarFailure::new("cache_unavailable", error.to_string()))
 }
 
-fn create_clean_job_dir(app: &AppHandle, job_id: &str) -> Result<PathBuf, SidecarFailure> {
+pub(crate) fn create_clean_job_dir(
+    app: &AppHandle,
+    job_id: &str,
+) -> Result<PathBuf, SidecarFailure> {
     validate_job_id(job_id)?;
     let root = jobs_root(app)?;
     fs::create_dir_all(&root)
@@ -95,21 +100,72 @@ fn sidecar_script(app: &AppHandle) -> Result<PathBuf, SidecarFailure> {
     }
 }
 
+fn sidecar_executable(app: &AppHandle) -> Result<PathBuf, SidecarFailure> {
+    let file_name = if cfg!(target_os = "windows") {
+        "perlerdrawing-sidecar.exe"
+    } else {
+        "perlerdrawing-sidecar"
+    };
+    let current_executable = std::env::current_exe()
+        .map_err(|error| SidecarFailure::new("sidecar_missing", error.to_string()))?;
+    let installed = current_executable
+        .parent()
+        .unwrap_or_else(|| Path::new("."))
+        .join(file_name);
+    if installed.is_file() {
+        return Ok(installed);
+    }
+    let resource = app
+        .path()
+        .resource_dir()
+        .map_err(|error| SidecarFailure::new("sidecar_missing", error.to_string()))?
+        .join(file_name);
+    if resource.is_file() {
+        return Ok(resource);
+    }
+    Err(SidecarFailure::new(
+        "sidecar_missing",
+        "The bundled image sidecar executable could not be found.",
+    ))
+}
+
+fn sidecar_command(app: &AppHandle, request_path: &Path) -> Result<Command, SidecarFailure> {
+    if cfg!(debug_assertions) {
+        let script = sidecar_script(app)?;
+        let python_dir = script.parent().ok_or_else(|| {
+            SidecarFailure::new("sidecar_missing", "The sidecar path has no parent.")
+        })?;
+        let mut command = Command::new("python3");
+        command
+            .arg(&script)
+            .arg("--request-file")
+            .arg(request_path)
+            .current_dir(python_dir);
+        return Ok(command);
+    }
+    let executable = sidecar_executable(app)?;
+    let mut command = Command::new(&executable);
+    command
+        .arg("--request-file")
+        .arg(request_path)
+        .current_dir(executable.parent().unwrap_or_else(|| Path::new(".")));
+    Ok(command)
+}
+
 fn run_sidecar(
     app: AppHandle,
     jobs: Arc<Mutex<HashMap<String, Arc<Mutex<Child>>>>>,
     job_id: String,
     request: Value,
 ) -> Result<Value, SidecarFailure> {
-    let script = sidecar_script(&app)?;
-    let python_dir = script
-        .parent()
-        .ok_or_else(|| SidecarFailure::new("sidecar_missing", "The sidecar path has no parent."))?;
-    let mut command = Command::new("python3");
+    let request_path = jobs_root(&app)?.join(&job_id).join("request.jsonl");
+    let request_line = serde_json::to_vec(&request)
+        .map_err(|error| SidecarFailure::new("invalid_request", error.to_string()))?;
+    fs::write(&request_path, [&request_line[..], b"\n"].concat())
+        .map_err(|error| SidecarFailure::new("sidecar_write_failed", error.to_string()))?;
+    let mut command = sidecar_command(&app, &request_path)?;
     command
-        .arg(&script)
-        .current_dir(python_dir)
-        .stdin(Stdio::piped())
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null());
     let mut child = command
@@ -121,20 +177,6 @@ fn run_sidecar(
             "The sidecar stdout pipe is unavailable.",
         )
     })?;
-    let mut stdin = child.stdin.take().ok_or_else(|| {
-        SidecarFailure::new(
-            "sidecar_start_failed",
-            "The sidecar stdin pipe is unavailable.",
-        )
-    })?;
-    let request_line = serde_json::to_vec(&request)
-        .map_err(|error| SidecarFailure::new("invalid_request", error.to_string()))?;
-    stdin
-        .write_all(&request_line)
-        .and_then(|_| stdin.write_all(b"\n"))
-        .map_err(|error| SidecarFailure::new("sidecar_write_failed", error.to_string()))?;
-    drop(stdin);
-
     let child = Arc::new(Mutex::new(child));
     jobs.lock()
         .map_err(|_| SidecarFailure::new("job_state_failed", "The job registry is poisoned."))?
@@ -359,13 +401,17 @@ fn read_job_asset(
 pub fn run() {
     tauri::Builder::default()
         .manage(SidecarState::default())
+        .manage(codex::CodexState::default())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .invoke_handler(tauri::generate_handler![
             run_image_job,
             run_export_job,
             cancel_sidecar_job,
-            read_job_asset
+            read_job_asset,
+            codex::detect_codex_cli,
+            codex::run_codex_image_plan,
+            codex::cancel_codex_job
         ])
         .run(tauri::generate_context!())
         .expect("error while running PerlerDrawing Desktop");

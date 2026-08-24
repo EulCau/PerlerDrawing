@@ -339,7 +339,7 @@ interface PatternDocument {
 ### 10.2 用户交互
 
 - 图片导入页提供 `使用本机 Codex CLI 处理` 开关, 默认关闭.
-- 开关旁显示检测结果, CLI 版本, 当前工作目录和权限说明.
+- 开关旁显示检测结果, CLI 版本和隔离权限说明. 运行时显示最近 JSONL 事件类型, 事件数和运行时间.
 - 第一次执行前要求用户确认输入图片, 输出目录和允许写入范围.
 - 任务面板显示阶段, JSONL 进度, 最近消息, 运行时间和取消按钮.
 - Codex 未安装, 未登录或运行失败时, 保留原图和参数并允许改用本地处理器.
@@ -353,8 +353,11 @@ codex exec \
   --image <input-image> \
   --json \
   --ephemeral \
+  --ignore-user-config \
+  --ignore-rules \
   --sandbox workspace-write \
   --cd <isolated-job-repository> \
+  --output-last-message <isolated-output-file> \
   "<generated-task-prompt>"
 ```
 
@@ -367,23 +370,24 @@ codex exec \
 - 输入图片的任务副本.
 - 当前色卡副本.
 - 本仓库 `AGENTS.md` 和必要的项目说明.
-- 允许 Codex 使用的转换脚本或已安装应用处理命令.
-- 唯一允许写入的 `output/` 目录.
+- 限定字段和范围的参数计划 JSON Schema.
+- 供本地处理器使用的请求参数副本.
+- Codex 约定写入的 `output/plan.json`.
 
 应用不读取, 复制或展示 `~/.codex/auth.json`. 认证完全交给用户自己的 Codex CLI. 默认使用 `workspace-write`, 不提供 `danger-full-access` 快捷选项.
 
 ### 10.5 结果接收
 
-Codex 输出不能直接成为可信文档. 导入前必须执行:
+Codex 输出不能直接成为可信文档. 首版只接收转换参数计划, 不接收 Codex 直接生成的 CSV 或图纸. 应用前必须执行:
 
-1. 路径和文件类型检查.
-2. CSV schema 和尺寸检查.
-3. 色号是否属于所选色卡的检查.
-4. 非空格和材料统计一致性检查.
-5. 对称, 占用范围, alpha 和归档内容检查.
-6. 通过后把结果转换为内部 `PatternDocument`.
+1. `output/plan.json` 必须是隔离输出目录内的普通文件, 拒绝符号链接和路径逃逸.
+2. 文件上限为 16 KB, JSON 拒绝 schema 之外的字段.
+3. 背景模式, 容差, 小波强度, alpha 阈值, 色数和对称类型必须属于本地处理器允许范围.
+4. Rust 验证后, TypeScript 在应用参数前再次验证同一组约束.
+5. 本地处理器使用验证后的参数生成母图和网格, 再执行色卡, 占用, 对称, alpha 和导出验证.
+6. 通过本地验证后才转换为内部 `PatternDocument`, 并在处理元数据中记录 Codex 参数计划.
 
-如果 Codex 环境没有所需图像工具, 它可以调用随任务提供的本地转换脚本. 应用不得假设所有 Codex 安装都具备图像生成或联网能力.
+Codex 任务不安装或调用额外图像工具, 只利用图片输入能力制定参数计划. 所有像素处理都由随应用安装的本地 sidecar 完成, 应用不假设 Codex 具备图像生成, shell 工具或搜索能力.
 
 ## 11. 技术架构
 
@@ -512,7 +516,7 @@ flowchart TB
 ### 15.1 Python sidecar
 
 - 使用 PyInstaller 为每个目标系统分别构建.
-- 首版优先使用 `onedir`, 便于诊断缺失动态库和模型文件. 稳定后再评估 `onefile`.
+- 首版使用 `onefile`, 使 Tauri external binary, NSIS 和 pacman 都采用单一同级可执行文件布局. PyInstaller 构建目录仍保留模块图和告警文件用于诊断.
 - Windows sidecar 必须在 Windows runner 上构建.
 - Arch sidecar 必须在 Arch 环境中构建. PyInstaller 不是跨平台编译器.
 - sidecar 文件名遵循 Tauri external binary 的目标三元组约定.
@@ -535,7 +539,7 @@ flowchart TB
 
 ## 16. GitHub Actions 方案
 
-应用脚手架和依赖锁文件创建后, 新增 `.github/workflows/desktop-release.yml`. 当前阶段不提交不可执行的占位 workflow.
+已实现 `.github/workflows/desktop-release.yml`, 只提交可执行的检查, 构建和发布 job.
 
 ### 16.1 触发条件
 
@@ -549,7 +553,7 @@ flowchart TB
 | Job | Runner | 内容 |
 | --- | --- | --- |
 | quality | ubuntu-latest | pnpm lint, TypeScript typecheck, Vitest, cargo fmt/check/test, pytest. |
-| build-windows | windows-latest | 安装 Node, Rust, Python, 构建 PyInstaller sidecar, 运行 Tauri build, 产出 NSIS 和可选 MSI. |
+| build-windows | windows-latest | 安装 Node, Rust, Python, 构建并冒烟测试 PyInstaller sidecar, 运行 Tauri build, 产出 NSIS. |
 | build-arch | ubuntu-latest + Arch container | 安装 base-devel, Node, Rust 和 Python, 以非 root 用户构建 sidecar 和 Tauri, 使用 PKGBUILD 产出 `.pkg.tar.zst`. |
 | release | ubuntu-latest | 校验哈希, 汇总变更, 上传经过测试的安装包和 SHA-256 文件. |
 
@@ -632,7 +636,7 @@ desktop_app/
 - 实现 CLI 探测, 任务隔离, JSONL 进度和取消.
 - 实现 Codex 结果验证和导入.
 - 构建 Windows NSIS 和 Arch PKGBUILD.
-- 增加 GitHub Actions, 签名和发布校验.
+- 增加 GitHub Actions 和发布校验. 代码签名证书在正式公开发布前配置.
 
 ### 阶段 4: 高级编辑能力
 

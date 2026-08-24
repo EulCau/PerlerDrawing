@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=PerlerDrawing Desktop
+Comment=Create and validate fuse-bead patterns
+Comment[zh_CN]=创建并校验拼豆图纸
+Exec=perlerdrawing-desktop
+Icon=perlerdrawing
+Terminal=false
+Categories=Graphics;Utility;
+StartupWMClass=io.perlerdrawing.desktop

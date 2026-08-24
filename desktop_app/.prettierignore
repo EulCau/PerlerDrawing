@@ -1,6 +1,14 @@
 dist/
+.build/
 node_modules/
 src-tauri/target/
 src-tauri/gen/
+src-tauri/binaries/
+packaging/arch/pkg/
+packaging/arch/src/
+packaging/arch/*.pkg.tar.zst
+packaging/arch/perlerdrawing-desktop
+packaging/arch/perlerdrawing-sidecar
+packaging/arch/perlerdrawing.png
 pnpm-lock.yaml
 docs/product-requirements-and-technical-plan.md

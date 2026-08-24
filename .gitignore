@@ -26,6 +26,15 @@ dist/
 node_modules/
 target/
 desktop_app/src-tauri/gen/
+desktop_app/.build/
+desktop_app/src-tauri/binaries/perlerdrawing-sidecar-*
+desktop_app/packaging/arch/sources/
+desktop_app/packaging/arch/perlerdrawing-desktop
+desktop_app/packaging/arch/perlerdrawing-sidecar
+desktop_app/packaging/arch/perlerdrawing.png
+desktop_app/packaging/arch/pkg/
+desktop_app/packaging/arch/src/
+desktop_app/packaging/arch/*.pkg.tar.zst
 *.egg-info/
 
 # Temporary and operating-system files

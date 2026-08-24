@@ -1,0 +1,24 @@
+pkgname=perlerdrawing-desktop
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Offline-first fuse-bead pattern editor'
+arch=('x86_64')
+license=('custom:unspecified')
+depends=('gtk3' 'libappindicator-gtk3' 'librsvg' 'webkit2gtk-4.1')
+options=('!strip')
+source=(
+  'perlerdrawing-desktop'
+  'perlerdrawing-sidecar'
+  'perlerdrawing.desktop'
+  'perlerdrawing.png'
+)
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+package() {
+  install -Dm755 "$srcdir/perlerdrawing-desktop" "$pkgdir/usr/bin/perlerdrawing-desktop"
+  install -Dm755 "$srcdir/perlerdrawing-sidecar" "$pkgdir/usr/bin/perlerdrawing-sidecar"
+  install -Dm644 "$srcdir/perlerdrawing.desktop" \
+    "$pkgdir/usr/share/applications/perlerdrawing.desktop"
+  install -Dm644 "$srcdir/perlerdrawing.png" \
+    "$pkgdir/usr/share/icons/hicolor/128x128/apps/perlerdrawing.png"
+}

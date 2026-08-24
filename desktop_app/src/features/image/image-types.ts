@@ -4,6 +4,7 @@ import {
   type PatternDocument,
   type SymmetryType,
 } from "../../editor/model/pattern-document";
+import type { CodexImagePlan } from "../codex/codex-types";
 import type { PaletteSnapshot } from "../palettes/palette-types";
 
 export interface ImageConversionSettings {
@@ -69,6 +70,7 @@ export interface CreateImageDocumentOptions {
   readonly artifactName: string;
   readonly sourceFileName: string;
   readonly jobId: string;
+  readonly codexPlan?: CodexImagePlan;
   readonly board: {
     readonly columns: number;
     readonly rows: number;
@@ -98,6 +100,13 @@ export function createDocumentFromImageResult(
       sourceFileName: options.sourceFileName,
       imageJobId: options.jobId,
       master_artifact: `${options.artifactName}_master.png`,
+      codex: options.codexPlan
+        ? {
+            enabled: true,
+            trustBoundary: "validated_parameter_plan",
+            plan: options.codexPlan,
+          }
+        : { enabled: false },
     },
   });
   result.document.cells.forEach((value, index) => {

@@ -17,6 +17,11 @@
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "package:check": "node scripts/check-packaging.mjs",
+    "sidecar:build": "node scripts/build-sidecar.mjs",
+    "sidecar:smoke": "node scripts/smoke-sidecar.mjs",
+    "bundle:nsis": "pnpm sidecar:build && tauri build --config src-tauri/tauri.bundle.conf.json --bundles nsis",
+    "bundle:arch": "pnpm sidecar:build && tauri build --no-bundle && node scripts/prepare-arch-package.mjs",
     "tauri": "tauri"
   },
   "dependencies": {

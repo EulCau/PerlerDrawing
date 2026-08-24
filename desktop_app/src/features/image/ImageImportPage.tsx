@@ -1,8 +1,18 @@
 import { isTauri } from "@tauri-apps/api/core";
-import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { BackIcon, CheckIcon, ImageIcon, UploadIcon } from "../../components/Icons";
 import type { PatternDocument, SymmetryType } from "../../editor/model/pattern-document";
+import { cancelCodexJob, detectCodexCli, runCodexImagePlan } from "../codex/codex-transport";
+import { applyCodexPlan, type CodexCliStatus, type CodexImagePlan } from "../codex/codex-types";
 import { mard221V1 } from "../palettes/builtins";
 import {
   cancelImageJob,
@@ -36,6 +46,7 @@ interface ProcessedPreview {
 }
 
 const MAX_IMAGE_PIXELS = 32_000_000;
+const CODEX_CONSENT_KEY = "perlerdrawing.codex-consent-v1";
 
 function integer(form: FormData, name: string): number {
   return Number.parseInt(String(form.get(name) ?? ""), 10);
@@ -70,6 +81,19 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
   const [waveletStrength, setWaveletStrength] = useState(0.55);
   const [backgroundTolerance, setBackgroundTolerance] = useState(18);
   const [alphaThreshold, setAlphaThreshold] = useState(0.28);
+  const [colorCount, setColorCount] = useState(24);
+  const [symmetry, setSymmetry] = useState<SymmetryType>("none");
+  const [codexStatus, setCodexStatus] = useState<CodexCliStatus | null>(null);
+  const [codexEnabled, setCodexEnabled] = useState(false);
+  const [showCodexConsent, setShowCodexConsent] = useState(false);
+  const [codexPlan, setCodexPlan] = useState<CodexImagePlan | null>(null);
+  const [codexNotice, setCodexNotice] = useState("");
+  const [activeCodexJobId, setActiveCodexJobId] = useState<string | null>(null);
+  const [codexStage, setCodexStage] = useState("starting");
+  const [codexEventCount, setCodexEventCount] = useState(0);
+  const [codexElapsed, setCodexElapsed] = useState(0);
+  const cancelRequested = useRef(false);
+  const codexDialogRef = useRef<HTMLElement>(null);
   const desktopAvailable = isTauri();
 
   useEffect(() => () => revokeImageUrl(selected?.previewUrl), [selected?.previewUrl]);
@@ -80,6 +104,29 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
     },
     [processed?.masterUrl, processed?.patternUrl],
   );
+  useEffect(() => {
+    let active = true;
+    void detectCodexCli()
+      .then((status) => {
+        if (active) setCodexStatus(status);
+      })
+      .catch(() => {
+        if (active) {
+          setCodexStatus({ available: false, compatible: false, version: null, missingFlags: [] });
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  useEffect(() => {
+    if (!activeCodexJobId) return;
+    const started = Date.now();
+    const timer = window.setInterval(() => {
+      setCodexElapsed(Math.floor((Date.now() - started) / 1000));
+    }, 1_000);
+    return () => window.clearInterval(timer);
+  }, [activeCodexJobId]);
 
   const estimatedMemory = useMemo(() => {
     if (!dimensions) return null;
@@ -103,6 +150,8 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
       setDimensions(nextDimensions);
       setArtifactName(imageArtifactName(file.name));
       setProcessed(null);
+      setCodexPlan(null);
+      setCodexNotice("");
       setProgress(0);
       setProgressKey("image.progress.ready");
     } catch (caught) {
@@ -119,12 +168,10 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
     const form = new FormData(event.currentTarget);
     const columns = integer(form, "columns");
     const rows = integer(form, "rows");
-    const colorCount = integer(form, "colorCount");
     const boardColumns = integer(form, "boardColumns");
     const boardRows = integer(form, "boardRows");
     const subdivision = integer(form, "subdivision");
     const seed = integer(form, "seed");
-    const symmetry = String(form.get("symmetry") ?? "none") as SymmetryType;
     const name = artifactName.trim();
     if (!/^[a-z0-9]+(?:_[a-z0-9]+)*$/.test(name)) {
       setError(t("newPattern.errors.name"));
@@ -152,31 +199,76 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
       return;
     }
 
-    const jobId = createJobId("image");
-    setActiveJobId(jobId);
+    cancelRequested.current = false;
     setProcessing(true);
     setError("");
     setProgress(0.02);
     setProgressKey("image.progress.starting");
     try {
+      let conversionSettings: ImageConversionSettings = {
+        columns,
+        rows,
+        color_count: colorCount,
+        alpha_threshold: alphaThreshold,
+        background_mode: backgroundMode,
+        background_tolerance: backgroundTolerance,
+        wavelet_strength: waveletStrength,
+        seed,
+        remove_tiny_components: form.get("removeTinyComponents") === "on",
+        symmetry,
+      };
+      setCodexPlan(null);
+      setCodexNotice("");
+      if (codexEnabled) {
+        const codexJobId = createJobId("codex");
+        setActiveCodexJobId(codexJobId);
+        setCodexStage("starting");
+        setCodexEventCount(0);
+        setCodexElapsed(0);
+        setProgress(0.03);
+        setProgressKey("codex.progress.starting");
+        try {
+          const envelope = await runCodexImagePlan(
+            codexJobId,
+            selected.path,
+            conversionSettings,
+            mard221V1,
+            (update) => {
+              setCodexStage(update.stage);
+              setCodexEventCount(update.event_count);
+              setProgress(update.progress * 0.24);
+              setProgressKey("codex.progress.analyzing");
+            },
+          );
+          conversionSettings = applyCodexPlan(conversionSettings, envelope.plan);
+          setBackgroundMode(conversionSettings.background_mode);
+          setBackgroundTolerance(conversionSettings.background_tolerance);
+          setWaveletStrength(conversionSettings.wavelet_strength);
+          setAlphaThreshold(conversionSettings.alpha_threshold);
+          setColorCount(conversionSettings.color_count);
+          setSymmetry(conversionSettings.symmetry);
+          setCodexPlan(envelope.plan);
+          setCodexNotice(t("codex.planApplied", { version: envelope.cliVersion }));
+        } catch (caught) {
+          if (cancelRequested.current) throw caught;
+          setCodexNotice(t("codex.localFallback"));
+        } finally {
+          setActiveCodexJobId(null);
+        }
+      }
+      if (cancelRequested.current) return;
+      const jobId = createJobId("image");
+      setActiveJobId(jobId);
+      const localProgressStart = codexEnabled ? 0.25 : 0;
+      setProgress(localProgressStart + 0.02);
+      setProgressKey("image.progress.starting");
       const envelope = await runImageJob(
         jobId,
         selected.path,
-        {
-          columns,
-          rows,
-          color_count: colorCount,
-          alpha_threshold: alphaThreshold,
-          background_mode: backgroundMode,
-          background_tolerance: backgroundTolerance,
-          wavelet_strength: waveletStrength,
-          seed,
-          remove_tiny_components: form.get("removeTinyComponents") === "on",
-          symmetry,
-        },
+        conversionSettings,
         mard221V1,
         (update) => {
-          setProgress(update.progress);
+          setProgress(localProgressStart + update.progress * (1 - localProgressStart));
           setProgressKey(update.message_key);
         },
       );
@@ -192,9 +284,16 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
       setError("");
       // Board settings stay in the form and are read again when opening the editor.
     } catch (caught) {
-      setError(translatedError(caught, t));
+      if (cancelRequested.current) {
+        setProgress(0);
+        setProgressKey("image.progress.ready");
+        setError("");
+      } else {
+        setError(translatedError(caught, t));
+      }
     } finally {
       setActiveJobId(null);
+      setActiveCodexJobId(null);
       setProcessing(false);
     }
   };
@@ -209,6 +308,7 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
         artifactName: artifactName.trim(),
         sourceFileName: selected?.name ?? "imported_image",
         jobId: processed.jobId,
+        codexPlan: codexPlan ?? undefined,
         board: {
           columns: integer(values, "boardColumns"),
           rows: integer(values, "boardRows"),
@@ -219,7 +319,52 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
   };
 
   const cancel = async () => {
+    cancelRequested.current = true;
+    if (activeCodexJobId) await cancelCodexJob(activeCodexJobId);
     if (activeJobId) await cancelImageJob(activeJobId);
+  };
+
+  const toggleCodex = (enabled: boolean) => {
+    if (!enabled) {
+      setCodexEnabled(false);
+      setCodexPlan(null);
+      setCodexNotice("");
+      return;
+    }
+    if (!codexStatus?.compatible) return;
+    if (window.localStorage.getItem(CODEX_CONSENT_KEY) === "accepted") {
+      setCodexEnabled(true);
+    } else {
+      setShowCodexConsent(true);
+    }
+  };
+
+  const acceptCodexConsent = () => {
+    window.localStorage.setItem(CODEX_CONSENT_KEY, "accepted");
+    setCodexEnabled(true);
+    setShowCodexConsent(false);
+  };
+
+  const handleCodexDialogKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setShowCodexConsent(false);
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const focusable = codexDialogRef.current?.querySelectorAll<HTMLElement>(
+      'button:not(:disabled), [tabindex]:not([tabindex="-1"])',
+    );
+    if (!focusable || focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
   };
 
   return (
@@ -370,7 +515,14 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
             <div className="image-option-grid">
               <label className="form-field">
                 <span>{t("image.colorCount")}</span>
-                <input defaultValue="24" max="64" min="2" name="colorCount" type="number" />
+                <input
+                  max="64"
+                  min="2"
+                  name="colorCount"
+                  onChange={(event) => setColorCount(Number(event.target.value))}
+                  type="number"
+                  value={colorCount}
+                />
               </label>
               <label className="form-field">
                 <span>{t("image.alphaThreshold")}</span>
@@ -386,7 +538,11 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
               </label>
               <label className="form-field">
                 <span>{t("image.symmetry")}</span>
-                <select defaultValue="none" name="symmetry">
+                <select
+                  name="symmetry"
+                  onChange={(event) => setSymmetry(event.target.value as SymmetryType)}
+                  value={symmetry}
+                >
                   <option value="none">{t("image.symmetryNone")}</option>
                   <option value="vertical">{t("image.symmetryVertical")}</option>
                   <option value="horizontal">{t("image.symmetryHorizontal")}</option>
@@ -419,6 +575,52 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
               <input defaultChecked name="removeTinyComponents" type="checkbox" />
               <span>{t("image.removeTinyComponents")}</span>
             </label>
+          </section>
+
+          <section className="codex-integration">
+            <div className="image-panel-heading">
+              <span>04</span>
+              <div>
+                <strong>{t("codex.title")}</strong>
+                <small>{t("codex.description")}</small>
+              </div>
+            </div>
+            <div className="codex-status-row">
+              <span className="codex-experimental">{t("codex.experimental")}</span>
+              <strong>
+                {codexStatus === null
+                  ? t("codex.statusChecking")
+                  : codexStatus.compatible
+                    ? t("codex.statusReady", { version: codexStatus.version })
+                    : codexStatus.available
+                      ? t("codex.statusIncompatible")
+                      : t("codex.statusMissing")}
+              </strong>
+            </div>
+            <label className="checkbox-row codex-toggle">
+              <input
+                checked={codexEnabled}
+                disabled={!codexStatus?.compatible || processing}
+                onChange={(event) => toggleCodex(event.target.checked)}
+                type="checkbox"
+              />
+              <span>{t("codex.enable")}</span>
+            </label>
+            <p className="codex-privacy-note">{t("codex.privacy")}</p>
+            {activeCodexJobId ? (
+              <div className="codex-live-status" role="status">
+                <strong>{t("codex.liveStage", { stage: codexStage })}</strong>
+                <small>
+                  {t("codex.liveDetail", { count: codexEventCount, seconds: codexElapsed })}
+                </small>
+              </div>
+            ) : null}
+            {codexNotice ? (
+              <div className="codex-plan-result" role="status">
+                <strong>{codexNotice}</strong>
+                {codexPlan ? <small>{codexPlan.rationale}</small> : null}
+              </div>
+            ) : null}
           </section>
 
           {processing || progress > 0 ? (
@@ -542,6 +744,49 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
           </button>
         </section>
       </main>
+      {showCodexConsent ? (
+        <div className="dialog-backdrop" role="presentation">
+          <section
+            aria-labelledby="codex-consent-title"
+            aria-modal="true"
+            className="new-pattern-dialog codex-consent-dialog"
+            onKeyDown={handleCodexDialogKeyDown}
+            ref={codexDialogRef}
+            role="dialog"
+          >
+            <div className="new-pattern-dialog__heading">
+              <div>
+                <span className="section-heading__eyebrow">{t("codex.experimental")}</span>
+                <h2 id="codex-consent-title">{t("codex.consentTitle")}</h2>
+                <p>{t("codex.consentDescription")}</p>
+              </div>
+            </div>
+            <ul className="codex-consent-list">
+              <li>{t("codex.consentImage")}</li>
+              <li>{t("codex.consentWorkspace")}</li>
+              <li>{t("codex.consentNetwork")}</li>
+              <li>{t("codex.consentCredentials")}</li>
+            </ul>
+            <div className="new-pattern-dialog__actions">
+              <button
+                className="button button--secondary"
+                onClick={() => setShowCodexConsent(false)}
+                type="button"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                className="button button--primary"
+                autoFocus
+                onClick={acceptCodexConsent}
+                type="button"
+              >
+                {t("codex.consentAccept")}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

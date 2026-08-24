@@ -1,0 +1,169 @@
+name: Desktop CI and release
+
+on:
+  pull_request:
+    paths:
+      - "desktop_app/**"
+      - ".github/workflows/desktop-release.yml"
+      - "AGENTS.md"
+  push:
+    branches: [main]
+    tags: ["app-v*"]
+    paths:
+      - "desktop_app/**"
+      - ".github/workflows/desktop-release.yml"
+      - "AGENTS.md"
+  workflow_dispatch:
+
+concurrency:
+  group: desktop-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/app-v') }}
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.3.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: desktop_app/pnpm-lock.yaml
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: desktop_app/python/requirements.txt
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: desktop_app/src-tauri
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libappindicator3-dev librsvg2-dev libwebkit2gtk-4.1-dev patchelf
+      - name: Install project dependencies
+        working-directory: desktop_app
+        run: |
+          pnpm install --frozen-lockfile
+          python -m pip install -r python/requirements.txt
+      - name: Validate frontend and packaging
+        working-directory: desktop_app
+        run: |
+          pnpm lint
+          pnpm typecheck
+          pnpm test
+          pnpm build
+          pnpm format:check
+          pnpm package:check
+      - name: Validate Python processor
+        working-directory: desktop_app
+        env:
+          PYTHONPATH: python
+        run: python -m unittest discover -s python/tests -v
+      - name: Validate Rust command layer
+        working-directory: desktop_app/src-tauri
+        run: |
+          cargo fmt -- --check
+          cargo check
+          cargo test
+
+  build-windows:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/app-v')
+    needs: quality
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.3.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: desktop_app/pnpm-lock.yaml
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            desktop_app/python/requirements.txt
+            desktop_app/python/requirements-build.txt
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: desktop_app/src-tauri
+      - name: Install build dependencies
+        working-directory: desktop_app
+        run: |
+          pnpm install --frozen-lockfile
+          python -m pip install -r python/requirements.txt -r python/requirements-build.txt
+      - name: Build and smoke-test native sidecar
+        working-directory: desktop_app
+        run: |
+          pnpm sidecar:build
+          pnpm sidecar:smoke
+      - name: Build NSIS installer
+        working-directory: desktop_app
+        run: pnpm tauri build --config src-tauri/tauri.bundle.conf.json --bundles nsis
+      - uses: actions/upload-artifact@v6
+        with:
+          name: perlerdrawing-windows-nsis
+          path: desktop_app/src-tauri/target/release/bundle/nsis/*-setup.exe
+          if-no-files-found: error
+
+  build-arch:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/app-v')
+    needs: quality
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Arch build dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --needed --noconfirm git gtk3 libappindicator-gtk3 librsvg nodejs patchelf pnpm python python-pip python-virtualenv rustup webkit2gtk-4.1
+          useradd --create-home builder
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+      - name: Configure non-root build environment
+        run: |
+          su builder -c "rustup default stable"
+          su builder -c "cd '$GITHUB_WORKSPACE/desktop_app' && python -m venv .venv-build"
+          su builder -c "cd '$GITHUB_WORKSPACE/desktop_app' && .venv-build/bin/python -m pip install -r python/requirements.txt -r python/requirements-build.txt"
+          su builder -c "cd '$GITHUB_WORKSPACE/desktop_app' && pnpm install --frozen-lockfile"
+      - name: Build and smoke-test Arch binaries
+        run: |
+          su builder -c "cd '$GITHUB_WORKSPACE/desktop_app' && PERLER_PYTHON=.venv-build/bin/python pnpm bundle:arch"
+          su builder -c "cd '$GITHUB_WORKSPACE/desktop_app' && pnpm sidecar:smoke"
+      - name: Build pacman package as non-root
+        run: su builder -c "cd '$GITHUB_WORKSPACE/desktop_app/packaging/arch' && makepkg --cleanbuild --noconfirm"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: perlerdrawing-arch
+          path: desktop_app/packaging/arch/*.pkg.tar.zst
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/app-v')
+    needs: [build-windows, build-arch]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: artifacts
+      - name: Generate SHA-256 manifest
+        run: find artifacts -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+      - name: Publish tested installers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes artifacts/*/* SHA256SUMS
