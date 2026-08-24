@@ -1,6 +1,6 @@
 # PerlerDrawing Desktop
 
-跨平台拼豆图纸制作应用. 当前已经完成第一阶段的基础壳, 包含 Tauri 2, React, TypeScript strict, 中英文切换, 主题切换和启动页.
+跨平台拼豆图纸制作应用. 当前已经完成桌面基础壳和编辑器核心模型, 包含 Tauri 2, React, TypeScript strict, 中英文与主题切换, `Uint16Array` 网格, 命令历史和 MARD 221 v1 registry.
 
 详细方案见 [docs/product-requirements-and-technical-plan.md](docs/product-requirements-and-technical-plan.md).
 逐步实施状态见 [docs/implementation-plan.md](docs/implementation-plan.md).
@@ -20,7 +20,7 @@ pnpm dev
 pnpm tauri dev
 ```
 
-验证第一步:
+验证当前实现:
 
 ```bash
 pnpm lint
@@ -54,4 +54,4 @@ desktop_app/
 
 ## 下一步
 
-实现紧凑网格文档模型, 命令历史, MARD 色卡 registry 和核心算法测试. GitHub Actions 仍按技术方案要求, 在安装包阶段加入, 不提交不可执行的占位 workflow.
+实现分层 Canvas 2D 编辑器, 坐标命中, 画笔, 橡皮擦, 吸管, 填充和格点几何工具. GitHub Actions 仍按技术方案要求, 在安装包阶段加入, 不提交不可执行的占位 workflow.
