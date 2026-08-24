@@ -8,7 +8,7 @@ on:
       - "AGENTS.md"
   push:
     branches: [main]
-    tags: ["app-v*"]
+    tags: ["v*", "app-v*"]
     paths:
       - "desktop_app/**"
       - ".github/workflows/desktop-release.yml"
@@ -17,7 +17,7 @@ on:
 
 concurrency:
   group: desktop-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/app-v') }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/v') && !startsWith(github.ref, 'refs/tags/app-v') }}
 
 permissions:
   contents: read
@@ -64,6 +64,7 @@ jobs:
           pnpm build
           pnpm format:check
           pnpm package:check
+          pnpm release-notes:test
       - name: Validate Python processor
         working-directory: desktop_app
         env:
@@ -77,7 +78,7 @@ jobs:
           cargo test
 
   build-windows:
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/app-v')
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/app-v')
     needs: quality
     runs-on: windows-latest
     steps:
@@ -121,7 +122,7 @@ jobs:
           if-no-files-found: error
 
   build-arch:
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/app-v')
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/app-v')
     needs: quality
     runs-on: ubuntu-latest
     container: archlinux:base-devel
@@ -152,18 +153,51 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: startsWith(github.ref, 'refs/tags/app-v')
+    if: startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/app-v')
     needs: [build-windows, build-arch]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/download-artifact@v7
         with:
           path: artifacts
       - name: Generate SHA-256 manifest
         run: find artifacts -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+      - name: Determine previous stable release
+        id: previous_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          previous_tag=""
+          while IFS= read -r candidate; do
+            if [[ -n "$candidate" && "$candidate" != "$GITHUB_REF_NAME" ]]; then
+              previous_tag="$candidate"
+              break
+            fi
+          done < <(gh release list --exclude-drafts --exclude-pre-releases --limit 100 --json tagName --jq '.[].tagName')
+          printf 'tag=%s\n' "$previous_tag" >> "$GITHUB_OUTPUT"
+      - name: Generate categorized release notes
+        working-directory: desktop_app
+        env:
+          RELEASE_CURRENT_TAG: ${{ github.ref_name }}
+          RELEASE_PREVIOUS_TAG: ${{ steps.previous_release.outputs.tag }}
+          RELEASE_NOTES_PATH: ../release-notes.md
+        run: |
+          node scripts/generate-release-notes.mjs
+          cat ../release-notes.md >> "$GITHUB_STEP_SUMMARY"
       - name: Publish tested installers
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" --generate-notes artifacts/*/* SHA256SUMS
+        shell: bash
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-notes.md --verify-tag --draft=false
+            gh release upload "$GITHUB_REF_NAME" artifacts/*/* SHA256SUMS --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-notes.md --verify-tag artifacts/*/* SHA256SUMS
+          fi

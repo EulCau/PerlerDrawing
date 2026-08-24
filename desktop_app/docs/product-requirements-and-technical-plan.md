@@ -545,7 +545,7 @@ flowchart TB
 
 - Pull Request: 只运行检查和测试.
 - Push 到 `main`: 运行检查, 不创建正式 release.
-- 标签 `app-v*`: 构建 Windows 和 Arch 安装包并创建 GitHub Release.
+- 标签 `v*` 或兼容的 `app-v*`: 等待 Windows 和 Arch 安装包构建完成, 再生成分类更新日志, SHA-256 清单并创建 GitHub Release.
 - `workflow_dispatch`: 手工构建测试包.
 
 ### 16.2 Jobs

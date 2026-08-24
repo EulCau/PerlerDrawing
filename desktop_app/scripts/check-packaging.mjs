@@ -11,6 +11,8 @@ const bundleConfig = JSON.parse(
 const pkgbuild = readFileSync(join(appRoot, "packaging", "arch", "PKGBUILD"), "utf8");
 const packageVersion = packageJson.version;
 const archVersion = /^pkgver=(.+)$/m.exec(pkgbuild)?.[1];
+const releaseTag = process.env.GITHUB_REF_TYPE === "tag" ? process.env.GITHUB_REF_NAME : "";
+const releaseVersion = /^(?:app-)?v(.+)$/.exec(releaseTag)?.[1];
 
 if (tauriConfig.version !== packageVersion || archVersion !== packageVersion) {
   throw new Error(
@@ -25,5 +27,10 @@ if (tauriConfig.bundle?.active !== false || bundleConfig.bundle?.active !== true
 }
 if (!tauriConfig.bundle?.targets?.includes("nsis")) {
   throw new Error("Tauri is not configured to produce the Windows NSIS installer.");
+}
+if (releaseTag && releaseVersion !== packageVersion) {
+  throw new Error(
+    `Release tag ${releaseTag} does not match the packaged version ${packageVersion}.`,
+  );
 }
 process.stdout.write(`Packaging configuration is consistent for ${packageVersion}.\n`);

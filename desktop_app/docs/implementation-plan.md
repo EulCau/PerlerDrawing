@@ -115,7 +115,7 @@
 - JSONL 单事件上限 1 MB, 单任务上限 10000 个事件, 默认超时 300 秒. UI 显示最近事件类型, 事件数, 运行时间和取消按钮. 失败时保留用户参数并回退到本地处理器.
 - PyInstaller 6.22.2 在各目标平台原生构建单文件 sidecar. 选择 `onefile` 是为了符合 Tauri external binary 的单可执行文件部署边界, 避免 `onedir` 的动态库目录在 NSIS 和 pacman 布局之间产生不同解析规则.
 - Windows 使用 Tauri NSIS, 简体中文和英文安装界面, 当前用户安装. Arch 使用 `PKGBUILD` 把 Tauri binary, sidecar, desktop entry 和图标组装为 `.pkg.tar.zst`.
-- GitHub Actions 在 PR 和 `main` 运行完整质量检查. `workflow_dispatch` 构建测试安装包, `app-v*` 标签在 Windows 和 Arch 环境分别构建后发布安装包与 SHA-256 清单.
+- GitHub Actions 在 PR 和 `main` 运行完整质量检查. `workflow_dispatch` 构建测试安装包, `v*` 和兼容的 `app-v*` 标签在 Windows 和 Arch 环境分别构建. Release job 通过 `needs` 等待两个安装包成功后才下载当前 run 的产物, 生成 SHA-256 清单, 按 Conventional Commits 类型生成从上一次正式发布到当前 tag 的分类更新日志, 最后创建或幂等更新 GitHub Release.
 
 验收: 3 项 Rust Codex 边界测试, 3 项前端 Codex 参数与首次授权测试和现有全部测试通过. PyInstaller 原生 sidecar 已完成协议冒烟测试. 本机 Arch 包已由 `makepkg` 生成并通过 `pacman -Qp` 和 `pacman -Qlp` 检查. Windows NSIS 由 `windows-latest` 发布 job 原生构建, 避免跨平台生成不可验证的 Windows sidecar.
 
