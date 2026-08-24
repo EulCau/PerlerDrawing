@@ -72,7 +72,7 @@ export const resources = {
       },
       footer: {
         privacy: "默认离线处理. 图片不会被自动上传.",
-        version: "完整桌面工作流 v0.1.0",
+        version: "完整桌面工作流 v1.0.0",
       },
       newPattern: {
         eyebrow: "空白图纸",
@@ -490,7 +490,7 @@ export const resources = {
       },
       footer: {
         privacy: "Offline by default. Images are never uploaded automatically.",
-        version: "Complete desktop workflow v0.1.0",
+        version: "Complete desktop workflow v1.0.0",
       },
       newPattern: {
         eyebrow: "Blank pattern",

@@ -55,11 +55,11 @@ Linux 启动时默认禁用 WebKitGTK 的 DMA-BUF 渲染器, 以避免部分 Way
 
 `v*` 标签会触发 `.github/workflows/desktop-release.yml`; 旧的 `app-v*` 格式继续兼容. 流水线等待 Windows NSIS 和 Arch pacman 包全部构建成功, 下载当前 workflow run 的产物, 生成 SHA-256 清单, 再创建或更新同名 GitHub Release. 更新日志按 `feat`, `fix`, `display`, `perf`, `security`, `refactor`, `build` 和 `docs` 分类, 比较范围是上一次正式发布至当前 tag.
 
-tag 版本必须与 `package.json`, Tauri 配置和 PKGBUILD 的 `pkgver` 一致. 发布 `v0.1.0` 前应先把三处版本统一为 `0.1.0`; `pkgrel` 只作为 Arch 包修订号, 不写入 tag.
+tag 版本必须与 `package.json`, Tauri 配置和 PKGBUILD 的 `pkgver` 一致. 发布 `v1.0.0` 前应先把三处版本统一为 `1.0.0`; `pkgrel` 只作为 Arch 包修订号, 不写入 tag.
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
 ## 目录

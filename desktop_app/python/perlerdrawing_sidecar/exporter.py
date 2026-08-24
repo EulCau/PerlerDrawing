@@ -104,7 +104,7 @@ def _occupied_bounds(grid: np.ndarray) -> tuple[int, int, int, int]:
 
 def _png_info(artifact_id: str, palette: dict[str, object]) -> PngImagePlugin.PngInfo:
     info = PngImagePlugin.PngInfo()
-    info.add_text("Software", "PerlerDrawing Desktop 0.1.0")
+    info.add_text("Software", "PerlerDrawing Desktop 1.0.0")
     info.add_text("Document", artifact_id)
     info.add_text("Palette", f"{palette.get('standardId', 'custom')}@{palette.get('version', 'unknown')}")
     return info
