@@ -23,6 +23,9 @@ htmlcov/
 # Build and package output
 build/
 dist/
+node_modules/
+target/
+desktop_app/src-tauri/gen/
 *.egg-info/
 
 # Temporary and operating-system files

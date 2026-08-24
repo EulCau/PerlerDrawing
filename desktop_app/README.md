@@ -1,10 +1,35 @@
 # PerlerDrawing Desktop
 
-跨平台拼豆图纸制作应用的代码目录. 当前阶段只完成产品需求和技术方案, 尚未创建可运行的应用脚手架.
+跨平台拼豆图纸制作应用. 当前已经完成第一阶段的基础壳, 包含 Tauri 2, React, TypeScript strict, 中英文切换, 主题切换和启动页.
 
 详细方案见 [docs/product-requirements-and-technical-plan.md](docs/product-requirements-and-technical-plan.md).
+逐步实施状态见 [docs/implementation-plan.md](docs/implementation-plan.md).
 
-## 计划中的目录
+## 本地运行
+
+前端开发服务器:
+
+```bash
+pnpm install
+pnpm dev
+```
+
+桌面窗口:
+
+```bash
+pnpm tauri dev
+```
+
+验证第一步:
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+## 目录
 
 ```text
 desktop_app/
@@ -29,4 +54,4 @@ desktop_app/
 
 ## 下一步
 
-确认文档中的 MVP 边界后, 再创建应用脚手架和可执行的 GitHub Actions. 这样可以避免仓库中出现无法构建的占位 workflow.
+实现紧凑网格文档模型, 命令历史, MARD 色卡 registry 和核心算法测试. GitHub Actions 仍按技术方案要求, 在安装包阶段加入, 不提交不可执行的占位 workflow.

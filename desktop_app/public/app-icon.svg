@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="PerlerDrawing">
+  <defs>
+    <linearGradient id="background" x1="128" y1="96" x2="896" y2="928" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5E6BE8" />
+      <stop offset="1" stop-color="#8D5BD7" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#282052" flood-opacity="0.25" />
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" rx="224" fill="url(#background)" />
+  <g filter="url(#shadow)">
+    <circle cx="352" cy="352" r="112" fill="#FFF6D8" />
+    <circle cx="672" cy="352" r="112" fill="#BDEED4" />
+    <circle cx="352" cy="672" r="112" fill="#FFD0C6" />
+    <circle cx="672" cy="672" r="112" fill="#D8D5FF" />
+    <circle cx="352" cy="352" r="44" fill="#5E6BE8" />
+    <circle cx="672" cy="352" r="44" fill="#5E6BE8" />
+    <circle cx="352" cy="672" r="44" fill="#5E6BE8" />
+    <circle cx="672" cy="672" r="44" fill="#5E6BE8" />
+  </g>
+</svg>

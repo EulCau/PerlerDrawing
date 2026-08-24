@@ -1,0 +1,57 @@
+# PerlerDrawing Desktop 实施流程
+
+本流程把产品文档中的四个阶段拆成可独立验证的增量. 每一步结束时都保持主分支可构建, 并只实现该步所需的最小边界.
+
+## 1. 桌面基础壳
+
+状态: 已完成.
+
+- Tauri 2 + React + TypeScript strict + Vite.
+- 本地设计令牌和响应式启动页.
+- `zh-CN` 和 `en-US` 即时切换.
+- 浅色, 深色和跟随系统主题.
+- 最小 Tauri capability 和生产 CSP.
+- Vitest, React Testing Library, ESLint 和 Prettier 基线.
+
+验收: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` 和 `cargo check` 全部通过.
+
+## 2. 编辑器核心模型
+
+- 使用 `Uint16Array` 保存网格, 空格使用保留值.
+- 分离文档状态, UI 状态和后台任务状态.
+- 建立可逆命令对象和撤销/重做历史.
+- 建立色卡 registry, 导入并校验 MARD 221 v1.
+- 为占用外接矩形, 几何算法和命令可逆性建立单元测试.
+
+## 3. Canvas 编辑器
+
+- 分层 Canvas 2D 渲染网格, 坐标, 分块线和板子边界.
+- 实现画笔, 橡皮擦, 吸管, 填充, 直线, 矩形和圆或椭圆.
+- 实现平移, 缩放, 适应窗口和格坐标命中测试.
+- 补充键盘操作, 焦点管理和 reduced motion.
+
+## 4. CSV 导入和导出
+
+- 支持仓库矩阵格式和简单矩阵格式.
+- 检测 BOM, 逗号和制表符, 严格校验行宽和未知色号.
+- 导出 UTF-8 with BOM, 并立即回读执行 round-trip 校验.
+
+## 5. 图片转换和完整导出
+
+- 抽取 Python 通用算法并建立 JSON Lines sidecar 协议.
+- 实现高分辨率母图, 预乘 alpha 重采样, 聚类和色卡量化.
+- 生成 PNG, inventory, metadata, tiles 和 `.tar.gz`.
+- 所有导出物从同一个不可变文档快照生成并经过统一验证器.
+
+## 6. Codex 集成和安装包
+
+- 在隔离临时 Git 仓库中调用用户明确启用的 Codex CLI.
+- 验证 JSONL 进度, 取消, 超时和不可信输出.
+- 构建 Windows NSIS 和 Arch Linux 软件包.
+- 增加可执行的 GitHub Actions 检查与发布流水线.
+
+## 7. 高级编辑能力
+
+- 选区, 移动, 复制, 旋转, 镜像和对称绘制.
+- 掩码修正, 分板打印, PDF 和版本比较.
+- 300 x 300 及更大网格的性能分析和脏矩形优化.
