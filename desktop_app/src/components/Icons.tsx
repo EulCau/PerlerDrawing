@@ -212,3 +212,47 @@ export function CloseIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function UploadIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="M12 16V4M7 9l5-5 5 5" />
+      <path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" />
+    </svg>
+  );
+}
+
+export function DownloadIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="M12 4v12M7 11l5 5 5-5" />
+      <path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+    </svg>
+  );
+}
+
+export function FileIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="M6 3h8l4 4v14H6V3Z" />
+      <path d="M14 3v5h5M9 12h6M9 16h6" />
+    </svg>
+  );
+}
+
+export function AlertIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="M12 3 2.8 20h18.4L12 3Z" />
+      <path d="M12 9v5M12 17.5v.1" />
+    </svg>
+  );
+}
+
+export function CheckIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="m5 12 4 4L19 6" />
+    </svg>
+  );
+}

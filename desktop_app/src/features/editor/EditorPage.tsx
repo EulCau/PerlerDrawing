@@ -33,6 +33,7 @@ import {
 import { computeOccupiedBounds } from "../../editor/model/occupied-bounds";
 import type { GridPoint } from "../../editor/tools/geometry";
 import { PatternCanvas, type PatternCanvasHandle } from "./PatternCanvas";
+import { CsvExportDialog } from "../csv/CsvExportDialog";
 
 interface EditorPageProps {
   readonly onBack: () => void;
@@ -138,6 +139,7 @@ export function EditorPage({ onBack }: EditorPageProps) {
   const [cursor, setCursor] = useState<GridPoint | null>(null);
   const [zoom, setZoom] = useState(100);
   const [paletteQuery, setPaletteQuery] = useState("");
+  const [showCsvExport, setShowCsvExport] = useState(false);
   const bounds = useMemo(
     () => (document ? computeOccupiedBounds(document.grid) : null),
     [document],
@@ -233,8 +235,12 @@ export function EditorPage({ onBack }: EditorPageProps) {
           {t("status.offline")}
         </span>
         <EditorPreferences />
-        <button className="button button--primary editor-export" disabled type="button">
-          {t("editor.export")}
+        <button
+          className="button button--primary editor-export"
+          onClick={() => setShowCsvExport(true)}
+          type="button"
+        >
+          {t("editor.exportCsv")}
         </button>
       </header>
 
@@ -398,6 +404,9 @@ export function EditorPage({ onBack }: EditorPageProps) {
         </span>
         <span className="editor-statusbar__hint">{t("editor.shortcutHint")}</span>
       </footer>
+      {showCsvExport ? (
+        <CsvExportDialog document={document} onClose={() => setShowCsvExport(false)} />
+      ) : null}
     </div>
   );
 }

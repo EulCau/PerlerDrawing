@@ -62,4 +62,28 @@ describe("application preferences", () => {
       subdivision: 5,
     });
   });
+
+  it("opens CSV import as a validation-first workflow", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /导入 CSV/ }));
+
+    expect(screen.getByRole("dialog", { name: "检查并导入图纸" })).toBeVisible();
+    expect(screen.getByText("尚未选择文件")).toBeVisible();
+    expect(screen.getByRole("button", { name: "导入并进入编辑器" })).toBeDisabled();
+  });
+
+  it("validates an editor snapshot before enabling CSV save", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /新建空白图纸/ }));
+    await user.click(screen.getByRole("button", { name: "创建并进入编辑器" }));
+
+    await user.click(screen.getByRole("button", { name: "导出 CSV" }));
+
+    expect(screen.getByRole("dialog", { name: "导出可回读的矩阵" })).toBeVisible();
+    expect(screen.getByText("Round-trip 校验通过")).toBeVisible();
+    expect(screen.getByRole("button", { name: /选择位置并保存/ })).toBeEnabled();
+  });
 });

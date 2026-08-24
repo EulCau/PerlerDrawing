@@ -66,9 +66,10 @@ interface ThemeOption {
 
 interface StartPageProps {
   readonly onCreateBlank: () => void;
+  readonly onImportCsv: () => void;
 }
 
-export function StartPage({ onCreateBlank }: StartPageProps) {
+export function StartPage({ onCreateBlank, onImportCsv }: StartPageProps) {
   const { t } = useTranslation();
   const locale = useSettingsStore((state) => state.locale);
   const theme = useSettingsStore((state) => state.theme);
@@ -249,10 +250,10 @@ export function StartPage({ onCreateBlank }: StartPageProps) {
             <ActionCard
               accent="peach"
               description={t("actions.csv.description")}
-              disabled
               icon={<TableIcon />}
+              onClick={onImportCsv}
+              statusLabel={t("status.available")}
               title={t("actions.csv.title")}
-              statusLabel={t("status.planned")}
             />
           </div>
         </section>
