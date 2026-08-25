@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { chmodSync, copyFileSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolvePythonCommand } from "./python-command.mjs";
 
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const pythonRoot = join(appRoot, "python");
@@ -9,7 +10,7 @@ const buildRoot = join(appRoot, ".build", "sidecar");
 const distRoot = join(buildRoot, "dist");
 const binaryRoot = join(appRoot, "src-tauri", "binaries");
 const extension = process.platform === "win32" ? ".exe" : "";
-const python = process.env.PERLER_PYTHON || (process.platform === "win32" ? "python" : "python3");
+const python = resolvePythonCommand(process.env.PERLER_PYTHON, appRoot);
 const targetTriple =
   process.env.TAURI_ENV_TARGET_TRIPLE ||
   execFileSync("rustc", ["--print", "host-tuple"], { encoding: "utf8" }).trim();

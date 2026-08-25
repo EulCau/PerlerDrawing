@@ -64,7 +64,7 @@ jobs:
           pnpm build
           pnpm format:check
           pnpm package:check
-          pnpm release-notes:test
+          pnpm scripts:test
       - name: Validate Python processor
         working-directory: desktop_app
         env:

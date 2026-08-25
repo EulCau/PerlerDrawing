@@ -19,6 +19,7 @@
     "format:check": "prettier --check .",
     "package:check": "node scripts/check-packaging.mjs",
     "release-notes:test": "node --test scripts/release-notes-tests.mjs",
+    "scripts:test": "node --test scripts/build-sidecar-tests.mjs scripts/release-notes-tests.mjs",
     "sidecar:build": "node scripts/build-sidecar.mjs",
     "sidecar:smoke": "node scripts/smoke-sidecar.mjs",
     "bundle:nsis": "pnpm sidecar:build && tauri build --config src-tauri/tauri.bundle.conf.json --bundles nsis",
