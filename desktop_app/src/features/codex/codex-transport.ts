@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import type { PaletteSnapshot } from "../palettes/palette-types";
 import type { ImageConversionSettings } from "../image/image-types";
 import {
+  normalizeCodexProxy,
   validateCodexPlan,
   type CodexCliStatus,
   type CodexPlanEnvelope,
@@ -52,6 +53,7 @@ export async function runCodexImagePlan(
   inputPath: string,
   settings: ImageConversionSettings,
   palette: PaletteSnapshot,
+  proxy: string,
   onProgress: (event: CodexProgressEvent) => void,
 ): Promise<CodexPlanEnvelope> {
   if (!isTauri()) {
@@ -70,6 +72,7 @@ export async function runCodexImagePlan(
       settings,
       palette: palette.colors,
       timeoutSeconds: 300,
+      proxy: normalizeCodexProxy(proxy),
     });
     return { ...envelope, plan: validateCodexPlan(envelope.plan) };
   } catch (error) {

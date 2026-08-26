@@ -35,6 +35,10 @@ describe("Codex consent boundary", () => {
     render(<ImageImportPage onBack={vi.fn()} onImport={vi.fn()} />);
 
     expect(await screen.findByText("codex-cli 0.146.1 可用")).toBeVisible();
+    expect(screen.getByRole("textbox", { name: "网络代理" })).toHaveAttribute(
+      "placeholder",
+      "http://127.0.0.1:7890",
+    );
     await user.click(screen.getByRole("checkbox", { name: "使用本机 Codex CLI 分析这张图片" }));
 
     const dialog = screen.getByRole("dialog", { name: "确认 Codex 任务边界" });

@@ -112,7 +112,7 @@
 - Rust 只执行从 `PATH` 解析并规范化后的 `codex` 原生可执行文件. 启动前探测 `codex exec --help`, 要求图片附件, JSONL, ephemeral, user-config 隔离, `workspace-write`, 工作目录和最终消息参数均可用.
 - 每个任务只复制输入图片, MARD 色卡, 参数和仓库 `AGENTS.md` 到应用缓存中的独立 Git 仓库. 不读取或复制 `~/.codex/auth.json`, 不提供 `danger-full-access`.
 - Codex 只生成最大 16 KB 的 `output/plan.json`. Rust 拒绝符号链接, 目录逃逸, 多余字段, 非法枚举和越界参数. TypeScript 在应用参数前再次校验, 最终图纸仍由本地小波, 聚类, 去背景和 MARD 流水线生成.
-- JSONL 单事件上限 1 MB, 单任务上限 10000 个事件, 默认超时 300 秒. UI 显示最近事件类型, 事件数, 运行时间和取消按钮. 失败时保留用户参数并回退到本地处理器.
+- JSONL 单事件上限 1 MB, 单任务上限 10000 个事件, 默认超时 300 秒. UI 显示最近事件类型, 事件数, 运行时间和取消按钮, 并在固定高度的可滚动面板中只呈现白名单文本字段. 用户可为单次 Codex 子进程设置经过校验的 HTTP, HTTPS 或 SOCKS5 代理, 不修改应用或系统的全局网络环境. 失败时保留用户参数并回退到本地处理器.
 - PyInstaller 6.22.2 在各目标平台原生构建单文件 sidecar. 选择 `onefile` 是为了符合 Tauri external binary 的单可执行文件部署边界, 避免 `onedir` 的动态库目录在 NSIS 和 pacman 布局之间产生不同解析规则.
 - Windows 使用 Tauri NSIS, 简体中文和英文安装界面, 当前用户安装. Arch 使用 `PKGBUILD` 把 Tauri binary, sidecar, desktop entry 和图标组装为 `.pkg.tar.zst`.
 - GitHub Actions 在 PR 和 `main` 运行完整质量检查. `workflow_dispatch` 构建测试安装包, `v*` 和兼容的 `app-v*` 标签在 Windows 和 Arch 环境分别构建. Release job 通过 `needs` 等待两个安装包成功后才下载当前 run 的产物, 生成 SHA-256 清单, 按 Conventional Commits 类型生成从上一次正式发布到当前 tag 的分类更新日志, 最后创建或幂等更新 GitHub Release.

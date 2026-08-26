@@ -11,14 +11,17 @@ use std::{
     time::{Duration, Instant},
 };
 use tauri::{AppHandle, Emitter, State};
+use url::Url;
 
 use crate::{create_clean_job_dir, validate_job_id};
 
 const CODEX_EVENT: &str = "perlerdrawing://codex-event";
 const MAX_EVENT_BYTES: usize = 1_048_576;
 const MAX_EVENT_COUNT: usize = 10_000;
+const MAX_DISPLAY_TEXT_CHARS: usize = 4_096;
 const MAX_PLAN_BYTES: u64 = 16_384;
 const MAX_INPUT_BYTES: u64 = 64 * 1024 * 1024;
+const MAX_PROXY_CHARS: usize = 2_048;
 const MIN_TIMEOUT_SECONDS: u64 = 30;
 const MAX_TIMEOUT_SECONDS: u64 = 900;
 const REQUIRED_FLAGS: [&str; 8] = [
@@ -67,6 +70,7 @@ struct CodexProgressEvent {
     stage: String,
     progress: f64,
     event_count: usize,
+    text: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -332,7 +336,30 @@ fn read_plan(repository: &Path) -> Result<CodexImagePlan, CodexFailure> {
     validate_plan(plan)
 }
 
-fn event_stage(line: &str) -> Result<String, CodexFailure> {
+fn display_text(value: &Value) -> Option<String> {
+    const POINTERS: [&str; 8] = [
+        "/item/text",
+        "/item/message",
+        "/item/aggregated_output",
+        "/item/output",
+        "/message",
+        "/error/message",
+        "/text",
+        "/output_text",
+    ];
+    POINTERS.iter().find_map(|pointer| {
+        let text = value.pointer(pointer)?.as_str()?;
+        let cleaned = text
+            .chars()
+            .filter(|character| matches!(character, '\n' | '\t') || !character.is_control())
+            .take(MAX_DISPLAY_TEXT_CHARS)
+            .collect::<String>();
+        let cleaned = cleaned.trim();
+        (!cleaned.is_empty()).then(|| cleaned.to_string())
+    })
+}
+
+fn parse_event(line: &str) -> Result<(String, Option<String>), CodexFailure> {
     if line.len() > MAX_EVENT_BYTES {
         return Err(CodexFailure::new(
             "invalid_codex_output",
@@ -354,7 +381,37 @@ fn event_stage(line: &str) -> Result<String, CodexFailure> {
             "A Codex event type contains unsupported characters.",
         ));
     }
-    Ok(event_type.to_string())
+    Ok((event_type.to_string(), display_text(&value)))
+}
+
+fn validate_proxy(proxy: Option<String>) -> Result<Option<String>, CodexFailure> {
+    let Some(proxy) = proxy else {
+        return Ok(None);
+    };
+    let proxy = proxy.trim();
+    if proxy.is_empty() {
+        return Ok(None);
+    }
+    if proxy.chars().count() > MAX_PROXY_CHARS || proxy.chars().any(char::is_control) {
+        return Err(CodexFailure::new(
+            "codex_proxy_invalid",
+            "The Codex proxy URL is invalid.",
+        ));
+    }
+    let parsed = Url::parse(proxy)
+        .map_err(|_| CodexFailure::new("codex_proxy_invalid", "The Codex proxy URL is invalid."))?;
+    if !matches!(parsed.scheme(), "http" | "https" | "socks5" | "socks5h")
+        || parsed.host_str().is_none()
+        || parsed.query().is_some()
+        || parsed.fragment().is_some()
+        || !matches!(parsed.path(), "" | "/")
+    {
+        return Err(CodexFailure::new(
+            "codex_proxy_invalid",
+            "The Codex proxy must be an HTTP, HTTPS, or SOCKS5 proxy URL without a path.",
+        ));
+    }
+    Ok(Some(proxy.to_string()))
 }
 
 fn read_stderr(mut stderr: impl Read, destination: Arc<Mutex<String>>) {
@@ -375,6 +432,7 @@ fn run_codex(
     timeout: Duration,
     cli_version: String,
     codex_executable: PathBuf,
+    proxy: Option<String>,
 ) -> Result<CodexPlanEnvelope, CodexFailure> {
     let final_message_path = repository.join("output/last-message.txt");
     let mut command = Command::new(codex_executable);
@@ -399,6 +457,18 @@ fn run_codex(
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    if let Some(proxy) = proxy {
+        for variable in [
+            "HTTP_PROXY",
+            "HTTPS_PROXY",
+            "ALL_PROXY",
+            "http_proxy",
+            "https_proxy",
+            "all_proxy",
+        ] {
+            command.env(variable, &proxy);
+        }
+    }
     let mut child = command
         .spawn()
         .map_err(|error| CodexFailure::new("codex_start_failed", error.to_string()))?;
@@ -463,8 +533,8 @@ fn run_codex(
                         let _ = process.kill();
                     }
                 } else {
-                    match event_stage(&line) {
-                        Ok(stage) => {
+                    match parse_event(&line) {
+                        Ok((stage, text)) => {
                             let progress = if stage == "turn.completed" {
                                 0.98
                             } else {
@@ -477,6 +547,7 @@ fn run_codex(
                                     stage,
                                     progress,
                                     event_count,
+                                    text,
                                 },
                             );
                         }
@@ -558,9 +629,11 @@ pub async fn run_codex_image_plan(
     settings: Value,
     palette: Value,
     timeout_seconds: u64,
+    proxy: Option<String>,
 ) -> Result<CodexPlanEnvelope, CodexFailure> {
     validate_job_id(&job_id).map_err(|error| CodexFailure::new(&error.code, error.message))?;
     let timeout_seconds = timeout_seconds.clamp(MIN_TIMEOUT_SECONDS, MAX_TIMEOUT_SECONDS);
+    let proxy = validate_proxy(proxy)?;
     let codex_executable = resolve_codex_executable();
     let cli = detect_cli_at(codex_executable.as_deref());
     if !cli.available {
@@ -648,6 +721,7 @@ pub async fn run_codex_image_plan(
             Duration::from_secs(timeout_seconds),
             cli_version,
             codex_executable,
+            proxy,
         )
     })
     .await
@@ -679,7 +753,7 @@ pub fn cancel_codex_job(
 
 #[cfg(test)]
 mod tests {
-    use super::{event_stage, validate_plan, CodexImagePlan};
+    use super::{parse_event, validate_plan, validate_proxy, CodexImagePlan};
 
     fn valid_plan() -> CodexImagePlan {
         CodexImagePlan {
@@ -713,11 +787,47 @@ mod tests {
     #[test]
     fn accepts_only_typed_jsonl_events() {
         assert_eq!(
-            event_stage(r#"{"type":"item.completed","item":{"type":"message"}}"#)
-                .expect("valid event"),
+            parse_event(r#"{"type":"item.completed","item":{"type":"message"}}"#)
+                .expect("valid event")
+                .0,
             "item.completed"
         );
-        assert!(event_stage("plain text").is_err());
-        assert!(event_stage(r#"{"message":"missing type"}"#).is_err());
+        assert!(parse_event("plain text").is_err());
+        assert!(parse_event(r#"{"message":"missing type"}"#).is_err());
+    }
+
+    #[test]
+    fn exposes_only_bounded_text_from_jsonl_events() {
+        let (_, text) = parse_event(
+            r#"{"type":"item.completed","item":{"id":"secret-id","type":"agent_message","text":"Planning the conversion."}}"#,
+        )
+        .expect("valid event");
+        assert_eq!(text.as_deref(), Some("Planning the conversion."));
+
+        let (_, text) = parse_event(
+            r#"{"type":"item.completed","item":{"type":"command_execution","command":"secret command","aggregated_output":"command output"}}"#,
+        )
+        .expect("valid event");
+        assert_eq!(text.as_deref(), Some("command output"));
+
+        let oversized = serde_json::json!({
+            "type": "item.completed",
+            "item": { "type": "agent_message", "text": "x".repeat(5_000) }
+        })
+        .to_string();
+        let (_, text) = parse_event(&oversized).expect("valid bounded event");
+        assert_eq!(text.expect("display text").chars().count(), 4_096);
+    }
+
+    #[test]
+    fn validates_supported_codex_proxy_urls() {
+        assert_eq!(
+            validate_proxy(Some(" http://127.0.0.1:7890 ".to_string()))
+                .expect("valid proxy")
+                .as_deref(),
+            Some("http://127.0.0.1:7890")
+        );
+        assert!(validate_proxy(Some("file:///tmp/socket".to_string())).is_err());
+        assert!(validate_proxy(Some("https://proxy.example/path".to_string())).is_err());
     }
 }

@@ -12,7 +12,12 @@ import { useTranslation } from "react-i18next";
 import { BackIcon, CheckIcon, ImageIcon, UploadIcon } from "../../components/Icons";
 import type { PatternDocument, SymmetryType } from "../../editor/model/pattern-document";
 import { cancelCodexJob, detectCodexCli, runCodexImagePlan } from "../codex/codex-transport";
-import { applyCodexPlan, type CodexCliStatus, type CodexImagePlan } from "../codex/codex-types";
+import {
+  applyCodexPlan,
+  normalizeCodexProxy,
+  type CodexCliStatus,
+  type CodexImagePlan,
+} from "../codex/codex-types";
 import { mard221V1 } from "../palettes/builtins";
 import {
   cancelImageJob,
@@ -46,6 +51,7 @@ interface ProcessedPreview {
 }
 
 const MAX_IMAGE_PIXELS = 32_000_000;
+const MAX_CODEX_OUTPUT_CHARACTERS = 32_768;
 const CODEX_CONSENT_KEY = "perlerdrawing.codex-consent-v1";
 
 function integer(form: FormData, name: string): number {
@@ -63,6 +69,23 @@ function translatedError(error: unknown, t: (key: string) => string): string {
     "processing_failed",
   ]);
   return t(`image.errors.${supported.has(code) ? code : "processing_failed"}`);
+}
+
+function appendCodexOutput(current: string, addition: string): string {
+  const cleaned = [...addition]
+    .filter((character) => {
+      const codePoint = character.codePointAt(0) ?? 0;
+      return character === "\n" || character === "\t" || (codePoint >= 32 && codePoint !== 127);
+    })
+    .join("")
+    .replace(/\r\n?/g, "\n")
+    .trim();
+  if (!cleaned || current.trimEnd().endsWith(cleaned)) return current;
+  const combined = current ? `${current}\n${cleaned}` : cleaned;
+  if (combined.length <= MAX_CODEX_OUTPUT_CHARACTERS) return combined;
+  const tail = combined.slice(-MAX_CODEX_OUTPUT_CHARACTERS);
+  const firstLineBreak = tail.indexOf("\n");
+  return `…\n${firstLineBreak >= 0 ? tail.slice(firstLineBreak + 1) : tail}`;
 }
 
 export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
@@ -88,12 +111,15 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
   const [showCodexConsent, setShowCodexConsent] = useState(false);
   const [codexPlan, setCodexPlan] = useState<CodexImagePlan | null>(null);
   const [codexNotice, setCodexNotice] = useState("");
+  const [codexProxy, setCodexProxy] = useState("");
+  const [codexOutput, setCodexOutput] = useState("");
   const [activeCodexJobId, setActiveCodexJobId] = useState<string | null>(null);
   const [codexStage, setCodexStage] = useState("starting");
   const [codexEventCount, setCodexEventCount] = useState(0);
   const [codexElapsed, setCodexElapsed] = useState(0);
   const cancelRequested = useRef(false);
   const codexDialogRef = useRef<HTMLElement>(null);
+  const codexOutputRef = useRef<HTMLPreElement>(null);
   const desktopAvailable = isTauri();
 
   useEffect(() => () => revokeImageUrl(selected?.previewUrl), [selected?.previewUrl]);
@@ -127,6 +153,10 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
     }, 1_000);
     return () => window.clearInterval(timer);
   }, [activeCodexJobId]);
+  useEffect(() => {
+    const output = codexOutputRef.current;
+    if (output) output.scrollTop = output.scrollHeight;
+  }, [codexOutput]);
 
   const estimatedMemory = useMemo(() => {
     if (!dimensions) return null;
@@ -152,6 +182,7 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
       setProcessed(null);
       setCodexPlan(null);
       setCodexNotice("");
+      setCodexOutput("");
       setProgress(0);
       setProgressKey("image.progress.ready");
     } catch (caught) {
@@ -198,6 +229,14 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
       setError(t("image.errors.parameters"));
       return;
     }
+    if (codexEnabled) {
+      try {
+        normalizeCodexProxy(codexProxy);
+      } catch {
+        setError(t("codex.proxyInvalid"));
+        return;
+      }
+    }
 
     cancelRequested.current = false;
     setProcessing(true);
@@ -219,6 +258,7 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
       };
       setCodexPlan(null);
       setCodexNotice("");
+      setCodexOutput("");
       if (codexEnabled) {
         const codexJobId = createJobId("codex");
         setActiveCodexJobId(codexJobId);
@@ -233,9 +273,13 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
             selected.path,
             conversionSettings,
             mard221V1,
+            codexProxy,
             (update) => {
               setCodexStage(update.stage);
               setCodexEventCount(update.event_count);
+              if (update.text) {
+                setCodexOutput((current) => appendCodexOutput(current, update.text ?? ""));
+              }
               setProgress(update.progress * 0.24);
               setProgressKey("codex.progress.analyzing");
             },
@@ -248,6 +292,7 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
           setColorCount(conversionSettings.color_count);
           setSymmetry(conversionSettings.symmetry);
           setCodexPlan(envelope.plan);
+          setCodexOutput((current) => appendCodexOutput(current, envelope.finalMessage));
           setCodexNotice(t("codex.planApplied", { version: envelope.cliVersion }));
         } catch (caught) {
           if (cancelRequested.current) throw caught;
@@ -606,6 +651,24 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
               />
               <span>{t("codex.enable")}</span>
             </label>
+            <label className="form-field codex-proxy-field">
+              <span>{t("codex.proxy")}</span>
+              <input
+                aria-describedby="codex-proxy-hint"
+                aria-label={t("codex.proxy")}
+                autoCapitalize="none"
+                autoComplete="off"
+                disabled={processing}
+                inputMode="url"
+                maxLength={2048}
+                onChange={(event) => setCodexProxy(event.target.value)}
+                placeholder="http://127.0.0.1:7890"
+                spellCheck={false}
+                type="url"
+                value={codexProxy}
+              />
+              <small id="codex-proxy-hint">{t("codex.proxyHint")}</small>
+            </label>
             <p className="codex-privacy-note">{t("codex.privacy")}</p>
             {activeCodexJobId ? (
               <div className="codex-live-status" role="status">
@@ -613,6 +676,27 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
                 <small>
                   {t("codex.liveDetail", { count: codexEventCount, seconds: codexElapsed })}
                 </small>
+              </div>
+            ) : null}
+            {activeCodexJobId || codexOutput ? (
+              <div className="codex-output">
+                <div className="codex-output__heading">
+                  <strong>{t("codex.outputTitle")}</strong>
+                  <small>
+                    {activeCodexJobId ? t("codex.outputRunning") : t("codex.outputComplete")}
+                  </small>
+                </div>
+                <pre
+                  aria-label={t("codex.outputTitle")}
+                  aria-live="polite"
+                  aria-relevant="additions text"
+                  className="codex-output__log"
+                  ref={codexOutputRef}
+                  role="log"
+                  tabIndex={0}
+                >
+                  {codexOutput || t("codex.outputWaiting")}
+                </pre>
               </div>
             ) : null}
             {codexNotice ? (

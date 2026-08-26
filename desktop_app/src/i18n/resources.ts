@@ -318,6 +318,9 @@ export const resources = {
         statusMissing: "未检测到 Codex CLI",
         statusIncompatible: "Codex CLI 缺少所需的非交互参数",
         enable: "使用本机 Codex CLI 分析这张图片",
+        proxy: "网络代理",
+        proxyHint: "可选. 仅为当前 Codex 子进程设置 HTTP, HTTPS 或 SOCKS5 代理, 不修改系统代理.",
+        proxyInvalid: "代理地址无效. 请填写不带路径的 HTTP, HTTPS 或 SOCKS5 代理 URL.",
         privacy:
           "启用后, 任务图片副本会交给用户已登录的 Codex CLI. Codex 只写入隔离临时仓库, 最终图纸仍由本地处理器生成和校验.",
         consentTitle: "确认 Codex 任务边界",
@@ -332,6 +335,10 @@ export const resources = {
         localFallback: "Codex 未完成, 已安全回退到原参数和本地处理器.",
         liveStage: "最近事件: {{stage}}",
         liveDetail: "{{count}} 个 JSONL 事件 · 已运行 {{seconds}} 秒",
+        outputTitle: "Codex 文字输出",
+        outputRunning: "执行中",
+        outputComplete: "执行结束",
+        outputWaiting: "等待 Codex 返回可显示的文字...",
         progress: {
           starting: "正在创建隔离 Codex 任务",
           analyzing: "Codex 正在分析结构并生成受限参数计划",
@@ -752,6 +759,11 @@ export const resources = {
         statusMissing: "Codex CLI was not detected",
         statusIncompatible: "Codex CLI is missing required non-interactive flags",
         enable: "Use the local Codex CLI to analyze this image",
+        proxy: "Network proxy",
+        proxyHint:
+          "Optional. Applies an HTTP, HTTPS, or SOCKS5 proxy only to the current Codex process without changing the system proxy.",
+        proxyInvalid:
+          "The proxy address is invalid. Enter an HTTP, HTTPS, or SOCKS5 proxy URL without a path.",
         privacy:
           "When enabled, a task copy of the image is given to the user's signed-in Codex CLI. Codex can write only in an isolated temporary repository; the local processor still generates and validates the final pattern.",
         consentTitle: "Confirm the Codex task boundary",
@@ -770,6 +782,10 @@ export const resources = {
           "Codex did not complete; the app safely fell back to the original parameters and local processor.",
         liveStage: "Latest event: {{stage}}",
         liveDetail: "{{count}} JSONL events · {{seconds}} seconds elapsed",
+        outputTitle: "Codex text output",
+        outputRunning: "Running",
+        outputComplete: "Finished",
+        outputWaiting: "Waiting for displayable text from Codex...",
         progress: {
           starting: "Creating an isolated Codex task",
           analyzing: "Codex is analyzing structure and producing a bounded parameter plan",

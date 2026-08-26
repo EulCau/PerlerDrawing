@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { ImageConversionSettings } from "../image/image-types";
-import { applyCodexPlan, validateCodexPlan, type CodexImagePlan } from "./codex-types";
+import {
+  applyCodexPlan,
+  normalizeCodexProxy,
+  validateCodexPlan,
+  type CodexImagePlan,
+} from "./codex-types";
 
 const plan: CodexImagePlan = {
   background_mode: "auto",
@@ -43,5 +48,18 @@ describe("Codex image plan validation", () => {
       RangeError,
     );
     expect(() => validateCodexPlan({ ...plan, rationale: " " })).toThrow(RangeError);
+  });
+});
+
+describe("Codex proxy validation", () => {
+  it("normalizes optional supported proxy URLs", () => {
+    expect(normalizeCodexProxy("  http://127.0.0.1:7890  ")).toBe("http://127.0.0.1:7890");
+    expect(normalizeCodexProxy("socks5://proxy.example:1080")).toBe("socks5://proxy.example:1080");
+    expect(normalizeCodexProxy("   ")).toBeNull();
+  });
+
+  it("rejects non-network and path-bearing proxy URLs", () => {
+    expect(() => normalizeCodexProxy("file:///tmp/proxy")).toThrow(RangeError);
+    expect(() => normalizeCodexProxy("https://proxy.example/path")).toThrow(RangeError);
   });
 });

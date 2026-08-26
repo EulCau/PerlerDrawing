@@ -12,6 +12,7 @@ export interface CodexProgressEvent {
   readonly stage: string;
   readonly progress: number;
   readonly event_count: number;
+  readonly text: string | null;
 }
 
 export interface CodexImagePlan {
@@ -32,6 +33,28 @@ export interface CodexPlanEnvelope {
 
 function finiteInRange(value: number, minimum: number, maximum: number): boolean {
   return Number.isFinite(value) && value >= minimum && value <= maximum;
+}
+
+export function normalizeCodexProxy(proxy: string): string | null {
+  const normalized = proxy.trim();
+  if (!normalized) return null;
+  if ([...normalized].length > 2_048) throw new RangeError("Codex proxy URL is too long.");
+  let parsed: URL;
+  try {
+    parsed = new URL(normalized);
+  } catch {
+    throw new RangeError("Codex proxy URL is invalid.");
+  }
+  if (
+    !["http:", "https:", "socks5:", "socks5h:"].includes(parsed.protocol) ||
+    !parsed.hostname ||
+    !["", "/"].includes(parsed.pathname) ||
+    parsed.search ||
+    parsed.hash
+  ) {
+    throw new RangeError("Codex proxy URL is invalid.");
+  }
+  return normalized;
 }
 
 export function validateCodexPlan(plan: CodexImagePlan): CodexImagePlan {
