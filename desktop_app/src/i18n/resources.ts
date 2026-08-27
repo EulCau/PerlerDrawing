@@ -75,7 +75,7 @@ export const resources = {
       },
       footer: {
         privacy: "默认离线处理. 图片不会被自动上传.",
-        version: "完整桌面工作流 v1.0.0",
+        version: "完整桌面工作流 v1.1.0",
       },
       newPattern: {
         title: "设置新画布",
@@ -471,7 +471,7 @@ export const resources = {
       },
       footer: {
         privacy: "Offline by default. Images are never uploaded automatically.",
-        version: "Complete desktop workflow v1.0.0",
+        version: "Complete desktop workflow v1.1.0",
       },
       newPattern: {
         title: "Set up a new canvas",
