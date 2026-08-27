@@ -9,10 +9,17 @@ import { choosePdfPath, runBoardPdfExport, type BoardPdfResult } from "./pdf-tra
 
 interface BoardPdfDialogProps {
   readonly document: PatternDocument;
+  readonly lastExportDirectory?: string;
   readonly onClose: () => void;
+  readonly onExportSaved: (path: string) => Promise<void>;
 }
 
-export function BoardPdfDialog({ document, onClose }: BoardPdfDialogProps) {
+export function BoardPdfDialog({
+  document,
+  lastExportDirectory,
+  onClose,
+  onExportSaved,
+}: BoardPdfDialogProps) {
   const { t } = useTranslation();
   const bounds = useMemo(() => computeOccupiedBounds(document.grid), [document]);
   const snapshot = useMemo(() => createCompleteExportSnapshot(document), [document]);
@@ -33,7 +40,7 @@ export function BoardPdfDialog({ document, onClose }: BoardPdfDialogProps) {
 
   const exportPdf = async () => {
     setError("");
-    const pdfPath = await choosePdfPath(`${artifactId}_boards.pdf`);
+    const pdfPath = await choosePdfPath(`${artifactId}_boards.pdf`, lastExportDirectory);
     if (!pdfPath) return;
     setExporting(true);
     setProgress(0.02);
@@ -43,6 +50,7 @@ export function BoardPdfDialog({ document, onClose }: BoardPdfDialogProps) {
       });
       setResult(exported);
       setProgress(1);
+      await onExportSaved(exported.pdf_path);
     } catch {
       setError(t("pdf.errors.failed"));
     } finally {

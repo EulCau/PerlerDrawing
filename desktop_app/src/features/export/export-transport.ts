@@ -48,11 +48,17 @@ export function createCompleteExportSnapshot(document: PatternDocument): Complet
   });
 }
 
-export async function chooseArchivePath(fileName: string): Promise<string | null> {
+export async function chooseArchivePath(
+  fileName: string,
+  lastExportDirectory?: string,
+): Promise<string | null> {
   if (!isTauri()) return null;
-  const { save } = await import("@tauri-apps/plugin-dialog");
+  const [{ save }, { join }] = await Promise.all([
+    import("@tauri-apps/plugin-dialog"),
+    import("@tauri-apps/api/path"),
+  ]);
   return save({
-    defaultPath: fileName,
+    defaultPath: lastExportDirectory ? await join(lastExportDirectory, fileName) : fileName,
     filters: [{ name: "Compressed tar archive", extensions: ["tar.gz"] }],
   });
 }

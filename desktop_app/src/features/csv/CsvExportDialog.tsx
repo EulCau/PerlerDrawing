@@ -8,7 +8,9 @@ import { saveCsvFile } from "./file-transport";
 
 interface CsvExportDialogProps {
   readonly document: PatternDocument;
+  readonly lastExportDirectory?: string;
   readonly onClose: () => void;
+  readonly onExportSaved: (path: string) => Promise<void>;
 }
 
 function csvFileName(document: PatternDocument): string {
@@ -17,7 +19,12 @@ function csvFileName(document: PatternDocument): string {
   return `${document.artifact.name}_${size}_${document.artifact.version}.csv`;
 }
 
-export function CsvExportDialog({ document, onClose }: CsvExportDialogProps) {
+export function CsvExportDialog({
+  document,
+  lastExportDirectory,
+  onClose,
+  onExportSaved,
+}: CsvExportDialogProps) {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLElement>(null);
   const [includeCoordinates, setIncludeCoordinates] = useState(true);
@@ -74,8 +81,11 @@ export function CsvExportDialog({ document, onClose }: CsvExportDialogProps) {
     setSaved(false);
     setError("");
     try {
-      const result = await saveCsvFile(fileName, exportResult.contents);
-      if (result === "saved") setSaved(true);
+      const result = await saveCsvFile(fileName, exportResult.contents, lastExportDirectory);
+      if (result.status === "saved") {
+        setSaved(true);
+        if (result.path) await onExportSaved(result.path);
+      }
     } catch {
       setError(t("csv.errors.write"));
     } finally {

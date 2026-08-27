@@ -13,10 +13,17 @@ import {
 
 interface CompleteExportDialogProps {
   readonly document: PatternDocument;
+  readonly lastExportDirectory?: string;
   readonly onClose: () => void;
+  readonly onExportSaved: (path: string) => Promise<void>;
 }
 
-export function CompleteExportDialog({ document, onClose }: CompleteExportDialogProps) {
+export function CompleteExportDialog({
+  document,
+  lastExportDirectory,
+  onClose,
+  onExportSaved,
+}: CompleteExportDialogProps) {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLElement>(null);
   const snapshot = useMemo(() => createCompleteExportSnapshot(document), [document]);
@@ -55,7 +62,7 @@ export function CompleteExportDialog({ document, onClose }: CompleteExportDialog
   const exportPackage = async () => {
     setError("");
     setResult(null);
-    const archivePath = await chooseArchivePath(fileName);
+    const archivePath = await chooseArchivePath(fileName, lastExportDirectory);
     if (!archivePath) return;
     setExporting(true);
     setProgress(0.02);
@@ -68,6 +75,7 @@ export function CompleteExportDialog({ document, onClose }: CompleteExportDialog
       setResult(exported);
       setProgress(1);
       setMessageKey("export.progress.complete");
+      await onExportSaved(exported.archive_path);
     } catch {
       setError(t("export.errors.failed"));
     } finally {

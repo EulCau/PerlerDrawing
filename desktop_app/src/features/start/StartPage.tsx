@@ -10,6 +10,7 @@ import {
   SunIcon,
   SystemIcon,
   TableIcon,
+  FileIcon,
 } from "../../components/Icons";
 import { BrandMark } from "../../components/BrandMark";
 import {
@@ -19,6 +20,17 @@ import {
   type Locale,
   type ThemeMode,
 } from "../../app/settings-store";
+import type { RecentProject } from "../project/project-transport";
+import { projectPreviewDataUrl } from "../project/project-preview";
+
+function recentPreviewUrl(project: RecentProject): string | undefined {
+  if (!project.preview) return undefined;
+  try {
+    return projectPreviewDataUrl(project.preview);
+  } catch {
+    return undefined;
+  }
+}
 
 interface ActionCardProps {
   icon: ReactNode;
@@ -68,9 +80,25 @@ interface StartPageProps {
   readonly onCreateBlank: () => void;
   readonly onImportCsv: () => void;
   readonly onImportImage: () => void;
+  readonly onOpenProject: () => void;
+  readonly onOpenRecent: (metadataPath: string) => void;
+  readonly openingProject: boolean;
+  readonly projectError: string;
+  readonly recentProjects: readonly RecentProject[];
+  readonly recentProjectsLoading: boolean;
 }
 
-export function StartPage({ onCreateBlank, onImportCsv, onImportImage }: StartPageProps) {
+export function StartPage({
+  onCreateBlank,
+  onImportCsv,
+  onImportImage,
+  onOpenProject,
+  onOpenRecent,
+  openingProject,
+  projectError,
+  recentProjects,
+  recentProjectsLoading,
+}: StartPageProps) {
   const { t } = useTranslation();
   const locale = useSettingsStore((state) => state.locale);
   const theme = useSettingsStore((state) => state.theme);
@@ -86,6 +114,10 @@ export function StartPage({ onCreateBlank, onImportCsv, onImportImage }: StartPa
     { value: "dark", label: t("preferences.dark"), icon: <MoonIcon /> },
     { value: "system", label: t("preferences.system"), icon: <SystemIcon /> },
   ];
+  const dateFormatter = new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 
   return (
     <div className="app-shell" id="top">
@@ -265,16 +297,73 @@ export function StartPage({ onCreateBlank, onImportCsv, onImportImage }: StartPa
               <span className="section-heading__eyebrow">{t("recent.library")}</span>
               <h2 id="recent-title">{t("recent.title")}</h2>
             </div>
+            <button
+              className="button button--secondary recent-projects__open"
+              disabled={openingProject}
+              onClick={onOpenProject}
+              type="button"
+            >
+              <FileIcon />
+              {openingProject ? t("project.opening") : t("project.open")}
+            </button>
           </div>
-          <div className="empty-state">
-            <span className="empty-state__icon" aria-hidden="true">
-              <ClockIcon />
-            </span>
-            <div>
-              <strong>{t("recent.emptyTitle")}</strong>
-              <p>{t("recent.emptyDescription")}</p>
+          {projectError ? (
+            <p className="recent-projects__error" role="alert" title={projectError}>
+              {t("project.errors.open")}
+            </p>
+          ) : null}
+          {recentProjects.length > 0 ? (
+            <div className="recent-project-list">
+              {recentProjects.map((project) => {
+                const openedAt = new Date(project.lastOpenedAt);
+                const previewUrl = recentPreviewUrl(project);
+                return (
+                  <button
+                    className="recent-project-card"
+                    disabled={openingProject}
+                    key={project.metadataPath}
+                    onClick={() => onOpenRecent(project.metadataPath)}
+                    type="button"
+                  >
+                    {previewUrl ? (
+                      <span className="recent-project-card__preview">
+                        <img
+                          alt={t("recent.previewAlt", { name: project.displayName })}
+                          src={previewUrl}
+                        />
+                      </span>
+                    ) : (
+                      <span className="recent-project-card__icon" aria-hidden="true">
+                        <ClockIcon />
+                      </span>
+                    )}
+                    <span className="recent-project-card__content">
+                      <strong>{project.displayName}</strong>
+                      <span title={project.metadataPath}>{project.metadataPath}</span>
+                    </span>
+                    <time dateTime={openedAt.toISOString()}>{dateFormatter.format(openedAt)}</time>
+                    <ArrowIcon className="recent-project-card__arrow" />
+                  </button>
+                );
+              })}
             </div>
-          </div>
+          ) : (
+            <div className="empty-state">
+              <span className="empty-state__icon" aria-hidden="true">
+                <ClockIcon />
+              </span>
+              <div>
+                <strong>
+                  {recentProjectsLoading ? t("recent.loading") : t("recent.emptyTitle")}
+                </strong>
+                <p>
+                  {recentProjectsLoading
+                    ? t("recent.loadingDescription")
+                    : t("recent.emptyDescription")}
+                </p>
+              </div>
+            </div>
+          )}
         </section>
       </main>
 

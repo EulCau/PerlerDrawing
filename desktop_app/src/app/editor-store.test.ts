@@ -38,6 +38,19 @@ describe("editor color bar", () => {
     expect(store.getState().selectedColorIndex).toBe(2);
   });
 
+  it("restores saved drawing colors even when they are not used in the grid", () => {
+    const store = createEditorStore();
+    const document = createDocument();
+
+    store.getState().resetForDocument(document, {
+      addedColorCodes: ["A3", "A8"],
+      selectedColorCode: "A8",
+    });
+
+    expect(store.getState().addedColorIndices).toEqual([2, 7]);
+    expect(store.getState().selectedColorIndex).toBe(7);
+  });
+
   it("only selects colors that were explicitly added", () => {
     const store = createEditorStore();
     store.getState().resetForDocument(createDocument());
@@ -49,5 +62,17 @@ describe("editor color bar", () => {
 
     expect(store.getState().addedColorIndices).toEqual([4]);
     expect(store.getState().selectedColorIndex).toBe(4);
+  });
+
+  it("tracks changes to the color bar fields stored with a project", () => {
+    const store = createEditorStore();
+    store.getState().resetForDocument(createDocument());
+    const initialRevision = store.getState().workspaceRevision;
+
+    store.getState().addColorIndex(2);
+    store.getState().addColorIndex(4);
+    store.getState().setSelectedColorIndex(2);
+
+    expect(store.getState().workspaceRevision).toBe(initialRevision + 3);
   });
 });

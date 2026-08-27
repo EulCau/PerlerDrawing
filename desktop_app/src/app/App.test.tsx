@@ -62,6 +62,8 @@ describe("application preferences", () => {
       rows: 29,
       subdivision: 5,
     });
+    expect(screen.getByRole("button", { name: "保存" })).toBeVisible();
+    expect(screen.getByText("有未保存的修改")).toBeVisible();
   });
 
   it("adds paint colors through the palette dialog", async () => {

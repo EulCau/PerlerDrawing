@@ -67,8 +67,24 @@ export const resources = {
       recent: {
         library: "项目库",
         title: "最近项目",
+        loading: "正在读取最近项目",
+        loadingDescription: "从系统应用数据目录加载项目记录.",
         emptyTitle: "还没有最近项目",
-        emptyDescription: "项目持久化和异常恢复将在文件工作流中接入.",
+        emptyDescription: "保存或打开图纸后, 它会出现在这里.",
+        previewAlt: "{{name}} 的图纸预览",
+      },
+      project: {
+        open: "打开项目",
+        opening: "正在打开...",
+        save: "保存",
+        saveAs: "另存为",
+        saving: "正在保存...",
+        saved: "已保存",
+        unsaved: "有未保存的修改",
+        saveFailed: "保存失败",
+        errors: {
+          open: "项目无法打开. 请检查 JSON 和同名 CSV 是否完整.",
+        },
       },
       footer: {
         privacy: "默认离线处理. 图片不会被自动上传.",
@@ -492,8 +508,24 @@ export const resources = {
       recent: {
         library: "Project library",
         title: "Recent projects",
+        loading: "Loading recent projects",
+        loadingDescription: "Reading project history from the system application-data folder.",
         emptyTitle: "No recent projects yet",
-        emptyDescription: "Project persistence and crash recovery arrive with the file workflow.",
+        emptyDescription: "Saved or opened patterns will appear here.",
+        previewAlt: "Pattern preview for {{name}}",
+      },
+      project: {
+        open: "Open project",
+        opening: "Opening...",
+        save: "Save",
+        saveAs: "Save as",
+        saving: "Saving...",
+        saved: "Saved",
+        unsaved: "Unsaved changes",
+        saveFailed: "Save failed",
+        errors: {
+          open: "The project could not be opened. Check that its JSON and same-name CSV are intact.",
+        },
       },
       footer: {
         privacy: "Offline by default. Images are never uploaded automatically.",

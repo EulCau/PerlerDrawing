@@ -7,7 +7,10 @@ export interface SelectedCsvFile {
   readonly text: string;
 }
 
-export type SaveCsvResult = "saved" | "cancelled";
+export interface SaveCsvResult {
+  readonly status: "saved" | "cancelled";
+  readonly path?: string;
+}
 
 function fileNameFromPath(path: string): string {
   return path.split(/[\\/]/).at(-1) || "imported_pattern.csv";
@@ -91,19 +94,24 @@ export async function pickCsvFile(): Promise<SelectedCsvFile | null> {
   };
 }
 
-export async function saveCsvFile(fileName: string, contents: string): Promise<SaveCsvResult> {
+export async function saveCsvFile(
+  fileName: string,
+  contents: string,
+  lastExportDirectory?: string,
+): Promise<SaveCsvResult> {
   if (isTauri()) {
-    const [{ save }, { writeTextFile }] = await Promise.all([
+    const [{ save }, { writeTextFile }, { join }] = await Promise.all([
       import("@tauri-apps/plugin-dialog"),
       import("@tauri-apps/plugin-fs"),
+      import("@tauri-apps/api/path"),
     ]);
     const path = await save({
-      defaultPath: fileName,
+      defaultPath: lastExportDirectory ? await join(lastExportDirectory, fileName) : fileName,
       filters: [{ name: "CSV", extensions: ["csv"] }],
     });
-    if (!path) return "cancelled";
+    if (!path) return { status: "cancelled" };
     await writeTextFile(path, contents);
-    return "saved";
+    return { status: "saved", path };
   }
 
   const blob = new Blob([contents], { type: "text/csv;charset=utf-8" });
@@ -116,5 +124,5 @@ export async function saveCsvFile(fileName: string, contents: string): Promise<S
   anchor.click();
   anchor.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
-  return "saved";
+  return { status: "saved" };
 }

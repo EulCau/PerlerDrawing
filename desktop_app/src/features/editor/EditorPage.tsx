@@ -1,5 +1,13 @@
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
-import { useCallback, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { useDocumentStore } from "../../app/document-store";
 import { useEditorStore, type EditorTool } from "../../app/editor-store";
@@ -29,6 +37,8 @@ import {
   RectangleIcon,
   RedoIcon,
   SelectionIcon,
+  SaveAsIcon,
+  SaveIcon,
   SunIcon,
   SystemIcon,
   TableIcon,
@@ -68,6 +78,13 @@ import { VersionCompareDialog } from "./VersionCompareDialog";
 
 interface EditorPageProps {
   readonly onBack: () => void;
+  readonly onSave: (saveAs: boolean) => Promise<void>;
+  readonly saving: boolean;
+  readonly saveError: string;
+  readonly isDirty: boolean;
+  readonly currentProjectPath?: string;
+  readonly lastExportDirectory?: string;
+  readonly onExportSaved: (path: string) => Promise<void>;
 }
 
 interface ToolDefinition {
@@ -166,7 +183,16 @@ function EditorPreferences() {
   );
 }
 
-export function EditorPage({ onBack }: EditorPageProps) {
+export function EditorPage({
+  currentProjectPath,
+  isDirty,
+  lastExportDirectory,
+  onBack,
+  onExportSaved,
+  onSave,
+  saveError,
+  saving,
+}: EditorPageProps) {
   const { t } = useTranslation();
   const document = useDocumentStore((state) => state.document);
   const revision = useDocumentStore((state) => state.revision);
@@ -311,6 +337,16 @@ export function EditorPage({ onBack }: EditorPageProps) {
     [document, executeCommand, selection],
   );
 
+  useEffect(() => {
+    const handleSaveShortcut = (event: globalThis.KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLocaleLowerCase() !== "s") return;
+      event.preventDefault();
+      if (!saving) void onSave(event.shiftKey);
+    };
+    window.addEventListener("keydown", handleSaveShortcut);
+    return () => window.removeEventListener("keydown", handleSaveShortcut);
+  }, [onSave, saving]);
+
   if (!document) return null;
   const symmetry = document.symmetry;
   const selectedColor =
@@ -387,6 +423,27 @@ export function EditorPage({ onBack }: EditorPageProps) {
           </button>
         </div>
         <div className="editor-topbar__spacer" />
+        <button
+          aria-label={t("project.save")}
+          className="button button--secondary editor-save"
+          disabled={saving}
+          onClick={() => void onSave(false)}
+          title={`${t("project.save")} · Ctrl+S`}
+          type="button"
+        >
+          <SaveIcon />
+          <span>{saving ? t("project.saving") : t("project.save")}</span>
+        </button>
+        <button
+          aria-label={t("project.saveAs")}
+          className="icon-button"
+          disabled={saving}
+          onClick={() => void onSave(true)}
+          title={`${t("project.saveAs")} · Ctrl+Shift+S`}
+          type="button"
+        >
+          <SaveAsIcon />
+        </button>
         <span className="offline-badge offline-badge--compact">
           <span aria-hidden="true" className="offline-badge__dot" />
           {t("status.offline")}
@@ -692,6 +749,19 @@ export function EditorPage({ onBack }: EditorPageProps) {
       </main>
 
       <footer className="editor-statusbar">
+        <span
+          className="project-save-status"
+          data-state={saveError ? "error" : isDirty ? "dirty" : "saved"}
+          title={saveError || currentProjectPath}
+        >
+          {saveError
+            ? t("project.saveFailed")
+            : saving
+              ? t("project.saving")
+              : isDirty
+                ? t("project.unsaved")
+                : t("project.saved")}
+        </span>
         <span>
           {t("editor.coordinates")}: {cursor ? `${cursor.column + 1}, ${cursor.row + 1}` : "—"}
         </span>
@@ -707,13 +777,28 @@ export function EditorPage({ onBack }: EditorPageProps) {
         <span className="editor-statusbar__hint">{t("editor.shortcutHint")}</span>
       </footer>
       {showCsvExport ? (
-        <CsvExportDialog document={document} onClose={() => setShowCsvExport(false)} />
+        <CsvExportDialog
+          document={document}
+          lastExportDirectory={lastExportDirectory}
+          onClose={() => setShowCsvExport(false)}
+          onExportSaved={onExportSaved}
+        />
       ) : null}
       {showCompleteExport ? (
-        <CompleteExportDialog document={document} onClose={() => setShowCompleteExport(false)} />
+        <CompleteExportDialog
+          document={document}
+          lastExportDirectory={lastExportDirectory}
+          onClose={() => setShowCompleteExport(false)}
+          onExportSaved={onExportSaved}
+        />
       ) : null}
       {showPdfExport ? (
-        <BoardPdfDialog document={document} onClose={() => setShowPdfExport(false)} />
+        <BoardPdfDialog
+          document={document}
+          lastExportDirectory={lastExportDirectory}
+          onClose={() => setShowPdfExport(false)}
+          onExportSaved={onExportSaved}
+        />
       ) : null}
       {showVersionCompare ? (
         <VersionCompareDialog

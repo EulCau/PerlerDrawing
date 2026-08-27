@@ -1,4 +1,5 @@
 mod codex;
+mod project_storage;
 
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -471,6 +472,11 @@ pub fn run() {
             run_pdf_export_job,
             cancel_sidecar_job,
             read_job_asset,
+            project_storage::load_app_user_state,
+            project_storage::save_pattern_project,
+            project_storage::read_pattern_project,
+            project_storage::record_recent_project,
+            project_storage::record_export_path,
             codex::detect_codex_cli,
             codex::run_codex_image_plan,
             codex::cancel_codex_job

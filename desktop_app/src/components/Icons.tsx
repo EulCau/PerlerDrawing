@@ -249,6 +249,24 @@ export function FileIcon(props: IconProps) {
   );
 }
 
+export function SaveIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="M5 3h12l2 2v16H5V3Z" />
+      <path d="M8 3v6h8V3M8 21v-7h8v7" />
+    </svg>
+  );
+}
+
+export function SaveAsIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="M5 3h10l2 2v7M8 3v6h6V3M8 21H5V3" />
+      <path d="m12 19 6.5-6.5 2 2L14 21h-2v-2Z" />
+    </svg>
+  );
+}
+
 export function AlertIcon(props: IconProps) {
   return (
     <svg {...baseProps} {...props}>

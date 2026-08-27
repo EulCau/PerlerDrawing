@@ -232,6 +232,10 @@
   backdrop-filter: blur(18px) saturate(130%);
 }
 
+.editor-save {
+  min-width: 78px;
+}
+
 .editor-brand-button {
   position: relative;
   display: grid;
@@ -963,6 +967,22 @@
 .editor-statusbar__hint {
   margin-left: auto;
   color: var(--color-text-subtle);
+}
+
+.project-save-status {
+  font-weight: 750;
+}
+
+.project-save-status[data-state="saved"] {
+  color: var(--color-success);
+}
+
+.project-save-status[data-state="dirty"] {
+  color: var(--color-text-muted);
+}
+
+.project-save-status[data-state="error"] {
+  color: var(--color-danger);
 }
 
 .csv-import-form {
