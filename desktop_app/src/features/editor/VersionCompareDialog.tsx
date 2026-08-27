@@ -70,9 +70,7 @@ export function VersionCompareDialog({ document, onApply, onClose }: VersionComp
       >
         <div className="new-pattern-dialog__heading">
           <div>
-            <span className="section-heading__eyebrow">{t("compare.eyebrow")}</span>
             <h2 id="version-compare-title">{t("compare.title")}</h2>
-            <p>{t("compare.description")}</p>
           </div>
           <button
             aria-label={t("common.close")}

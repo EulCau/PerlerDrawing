@@ -19,6 +19,7 @@ import {
   renderGridCanvas,
   renderGridOverlayCanvas,
   renderInteractionCanvas,
+  type CanvasDisplayMode,
   type CanvasTheme,
 } from "../../editor/canvas/render-canvas";
 import {
@@ -65,6 +66,7 @@ interface PatternCanvasProps {
   readonly selection: GridSelection | null;
   readonly symmetry: SymmetrySettings;
   readonly differences: readonly CellDifference[];
+  readonly displayMode: CanvasDisplayMode;
   readonly onSelectionChange: (selection: GridSelection | null) => void;
   readonly onMoveSelection: (
     selection: GridSelection,
@@ -195,6 +197,7 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
       selection,
       symmetry,
       differences,
+      displayMode,
       onSelectionChange,
       onMoveSelection,
       onClearSelection,
@@ -325,12 +328,13 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
         viewport.offsetY,
         viewport.cellSize,
         themeMode,
+        displayMode,
       ].join(":");
       const previousCells = previousCellsRef.current;
       if (renderKeyRef.current !== renderKey || !previousCells) {
         renderGridCanvas(gridCanvas, document, viewport, size, theme);
-        renderBeadCanvas(beadCanvas, document, viewport, size, theme);
-        renderGridOverlayCanvas(guideCanvas, document, viewport, size, theme);
+        renderBeadCanvas(beadCanvas, document, viewport, size, theme, null, displayMode);
+        renderGridOverlayCanvas(guideCanvas, document, viewport, size, theme, displayMode);
       } else {
         const dirtyBounds = computeGridDifferenceBounds(
           previousCells,
@@ -338,12 +342,12 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
           document.grid.columns,
         );
         if (dirtyBounds) {
-          renderBeadCanvas(beadCanvas, document, viewport, size, theme, dirtyBounds);
+          renderBeadCanvas(beadCanvas, document, viewport, size, theme, dirtyBounds, displayMode);
         }
       }
       renderKeyRef.current = renderKey;
       previousCellsRef.current = document.grid.cells.slice();
-    }, [document, revision, size, themeMode, viewport]);
+    }, [displayMode, document, revision, size, themeMode, viewport]);
 
     useEffect(() => {
       const canvas = interactionCanvasRef.current;
@@ -354,19 +358,20 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
       if (!canvas || size.width <= 0 || size.height <= 0) return;
       renderInteractionCanvas(
         canvas,
-        preview,
-        hover,
+        displayMode === "preview" ? [] : preview,
+        displayMode === "preview" ? null : hover,
         viewport,
         size,
         color,
         previewErasing,
         readTheme(),
-        selection,
-        differences,
+        displayMode === "preview" ? null : selection,
+        displayMode === "preview" ? [] : differences,
       );
     }, [
       document.palette.colors,
       differences,
+      displayMode,
       hover,
       preview,
       previewErasing,
@@ -416,7 +421,7 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
       event.currentTarget.focus();
       event.currentTarget.setPointerCapture?.(event.pointerId);
 
-      if (event.button === 1 || activeTool === "pan" || spacePan) {
+      if (event.button === 1 || displayMode === "preview" || activeTool === "pan" || spacePan) {
         gestureRef.current = {
           kind: "pan",
           pointerId: event.pointerId,
@@ -620,12 +625,12 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
     const handleKeyDown = (event: KeyboardEvent<HTMLCanvasElement>) => {
       const modifier = event.ctrlKey || event.metaKey;
       const key = event.key.toLowerCase();
-      if (modifier && key === "c" && selection) {
+      if (displayMode === "draw" && modifier && key === "c" && selection) {
         event.preventDefault();
         onCopySelection();
         return;
       }
-      if (modifier && key === "v") {
+      if (displayMode === "draw" && modifier && key === "v") {
         event.preventDefault();
         onPasteSelection();
         return;
@@ -651,12 +656,12 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
         else onClearSelection();
         return;
       }
-      if (event.key === "Delete" && selection) {
+      if (displayMode === "draw" && event.key === "Delete" && selection) {
         event.preventDefault();
         onDeleteSelection();
         return;
       }
-      if (event.key === "Delete" && hover) {
+      if (displayMode === "draw" && event.key === "Delete" && hover) {
         event.preventDefault();
         commitPoints([hover], EMPTY_CELL, "Erase cell");
         return;
@@ -683,7 +688,7 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
         ArrowDown: [0, 1],
       };
       const delta = arrowDelta[event.key];
-      if (selection && delta) {
+      if (displayMode === "draw" && selection && delta) {
         event.preventDefault();
         onMoveSelection(selection, delta[0], delta[1]);
         return;
@@ -701,7 +706,7 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
         s: "selection",
       };
       const tool = shortcuts[key];
-      if (tool && !modifier && !event.altKey) {
+      if (displayMode === "draw" && tool && !modifier && !event.altKey) {
         event.preventDefault();
         setActiveTool(tool);
       }
@@ -709,7 +714,7 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
 
     const cursorMode = isPanning
       ? "grabbing"
-      : activeTool === "pan" || spacePan
+      : displayMode === "preview" || activeTool === "pan" || spacePan
         ? "grab"
         : activeTool === "selection" && selection && hover && selectionContains(selection, hover)
           ? "move"
@@ -730,6 +735,7 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
           })}
           className="pattern-canvas__layer pattern-canvas__interaction"
           data-cursor={cursorMode}
+          data-mode={displayMode}
           onBlur={() => setSpacePan(false)}
           onContextMenu={(event) => event.preventDefault()}
           onKeyDown={handleKeyDown}

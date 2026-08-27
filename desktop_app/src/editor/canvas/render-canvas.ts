@@ -28,6 +28,8 @@ export interface GridDirtyBounds {
   readonly bottom: number;
 }
 
+export type CanvasDisplayMode = "draw" | "preview";
+
 type VisibleRange = GridDirtyBounds;
 
 function prepareCanvas(
@@ -97,8 +99,9 @@ function drawBead(
   cellSize: number,
   color: string,
   holeColor: string,
+  displayMode: CanvasDisplayMode,
 ): void {
-  if (cellSize < 4) {
+  if (displayMode === "preview" || cellSize < 4) {
     context.fillStyle = color;
     context.fillRect(x, y, cellSize, cellSize);
     return;
@@ -236,9 +239,11 @@ export function renderGridOverlayCanvas(
   viewport: CanvasViewport,
   size: CanvasSize,
   theme: CanvasTheme,
+  displayMode: CanvasDisplayMode = "draw",
 ): void {
   const context = prepareCanvas(canvas, size);
   if (!context) return;
+  if (displayMode === "preview") return;
   drawGridLines(context, document, viewport, size, theme);
   drawCoordinates(context, document, viewport, size, theme);
 }
@@ -250,6 +255,7 @@ export function renderBeadCanvas(
   size: CanvasSize,
   theme: CanvasTheme,
   dirtyBounds: GridDirtyBounds | null = null,
+  displayMode: CanvasDisplayMode = "draw",
 ): void {
   const context = prepareCanvas(canvas, size, dirtyBounds === null);
   if (!context) return;
@@ -279,7 +285,15 @@ export function renderBeadCanvas(
       const paletteColor = document.palette.colors[value];
       if (!paletteColor) continue;
       const point = gridPointToCanvas({ column, row }, viewport);
-      drawBead(context, point.x, point.y, viewport.cellSize, paletteColor.hex, theme.beadHole);
+      drawBead(
+        context,
+        point.x,
+        point.y,
+        viewport.cellSize,
+        paletteColor.hex,
+        theme.beadHole,
+        displayMode,
+      );
     }
   }
 }

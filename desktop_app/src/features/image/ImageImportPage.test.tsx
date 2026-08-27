@@ -7,13 +7,13 @@ import { ImageImportPage } from "./ImageImportPage";
 describe("image import page", () => {
   afterEach(() => cleanup());
 
-  it("explains the structure-preserving pipeline before processing", () => {
+  it("shows the complete three-stage comparison without marketing copy", () => {
     render(<ImageImportPage onBack={vi.fn()} onImport={vi.fn()} />);
 
-    expect(screen.getByRole("heading", { name: "先理解结构, 再生成拼豆网格." })).toBeVisible();
-    expect(screen.getByText("结构保真流水线")).toBeVisible();
-    expect(screen.getByText(/两层 Haar 小波/)).toBeVisible();
-    expect(screen.getByText(/边界 Lab 聚类/)).toBeVisible();
+    expect(screen.getByRole("heading", { name: "图片转图纸" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "原图, 母图和图纸对比" })).toBeVisible();
+    expect(screen.queryByText("结构保真流水线")).not.toBeInTheDocument();
+    expect(screen.queryByText(/两层 Haar 小波/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /生成母图和图纸/ })).toBeDisabled();
   });
 

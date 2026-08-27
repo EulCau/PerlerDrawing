@@ -69,9 +69,7 @@ export function BoardPdfDialog({
       >
         <div className="new-pattern-dialog__heading">
           <div>
-            <span className="section-heading__eyebrow">{t("pdf.eyebrow")}</span>
             <h2 id="board-pdf-title">{t("pdf.title")}</h2>
-            <p>{t("pdf.description")}</p>
           </div>
           <button
             aria-label={t("common.close")}

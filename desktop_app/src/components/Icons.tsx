@@ -135,6 +135,24 @@ export function FitIcon(props: IconProps) {
   );
 }
 
+export function PreviewIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="M2.8 12s3.4-5.5 9.2-5.5 9.2 5.5 9.2 5.5-3.4 5.5-9.2 5.5S2.8 12 2.8 12Z" />
+      <circle cx="12" cy="12" r="2.4" />
+    </svg>
+  );
+}
+
+export function MirrorIcon(props: IconProps) {
+  return (
+    <svg {...baseProps} {...props}>
+      <path d="M12 3v18" strokeDasharray="2 2" />
+      <path d="m9 7-5 5 5 5V7ZM15 7l5 5-5 5V7Z" />
+    </svg>
+  );
+}
+
 export function BrushIcon(props: IconProps) {
   return (
     <svg {...baseProps} {...props}>

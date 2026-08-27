@@ -86,7 +86,6 @@ export function CompleteExportDialog({
   return (
     <div className="dialog-backdrop" role="presentation">
       <section
-        aria-describedby="complete-export-description"
         aria-labelledby="complete-export-title"
         aria-modal="true"
         className="csv-dialog complete-export-dialog"
@@ -96,9 +95,7 @@ export function CompleteExportDialog({
       >
         <div className="new-pattern-dialog__heading">
           <div>
-            <span className="section-heading__eyebrow">{t("export.eyebrow")}</span>
             <h2 id="complete-export-title">{t("export.title")}</h2>
-            <p id="complete-export-description">{t("export.description")}</p>
           </div>
           <button
             aria-label={t("common.close")}

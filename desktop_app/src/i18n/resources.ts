@@ -8,10 +8,6 @@ export const resources = {
       },
       status: {
         offline: "离线优先",
-        available: "可用",
-        foundationTitle: "高级编辑, Codex 和原生安装包已就绪",
-        foundationDescription:
-          "选区变换, 对称绘制, 分板 PDF 和版本比较均可离线使用, Codex 仍保持可选.",
         nextStep: "下一步",
         planned: "计划中",
       },
@@ -34,26 +30,18 @@ export const resources = {
         system: "跟随系统主题",
       },
       home: {
-        eyebrow: "离线拼豆图纸工作台",
-        title: "把灵感变成可实际拼制的图纸.",
-        description:
-          "从图片, CSV 或空白画布开始. 使用真实色卡逐格编辑, 校验材料数量, 并导出完整交付包.",
-        workflow: "开始创作",
+        title: "新建或打开图纸",
         quickStart: "选择工作流程",
-        actionHint: "图片, CSV 和空白画布工作流均已启用",
       },
       actions: {
         new: {
           title: "新建空白图纸",
-          description: "设置画布, 板子和分块线, 从第一颗拼豆开始.",
         },
         image: {
           title: "导入图片",
-          description: "制作高分辨率母图, 再完成栅格化和色卡量化.",
         },
         csv: {
           title: "导入 CSV",
-          description: "检查尺寸和未知色号后, 继续编辑已有图纸.",
         },
       },
       preview: {
@@ -65,7 +53,6 @@ export const resources = {
         beads: "拼豆数",
       },
       recent: {
-        library: "项目库",
         title: "最近项目",
         loading: "正在读取最近项目",
         loadingDescription: "从系统应用数据目录加载项目记录.",
@@ -91,9 +78,7 @@ export const resources = {
         version: "完整桌面工作流 v1.0.0",
       },
       newPattern: {
-        eyebrow: "空白图纸",
         title: "设置新画布",
-        description: "明确设置画布, 实体板和视图分块. 这些参数会随文档保存.",
         name: "图纸名称",
         nameHint: "使用小写 snake_case, 例如 flower_badge.",
         canvas: "画布尺寸",
@@ -128,6 +113,12 @@ export const resources = {
         zoomIn: "放大",
         zoomLevel: "缩放比例",
         fit: "适应窗口",
+        viewActions: "显示与变换",
+        drawMode: "绘制",
+        previewMode: "预览",
+        switchToDrawMode: "切换到绘制模式",
+        switchToPreviewMode: "切换到预览模式",
+        mirrorVerticalCenter: "沿竖直中心线镜像",
         export: "导出将在下一部分启用",
         exportCsv: "导出 CSV",
         exportPackage: "完整导出",
@@ -144,9 +135,7 @@ export const resources = {
         toolParameters: "工具参数",
         strokeWidth: "格宽",
         filledShape: "填充形状内部",
-        noToolParameters: "此工具没有额外参数.",
         symmetryDrawing: "对称绘制",
-        symmetryHint: "绘制和擦除会在记录历史前按当前轴同步到对应格.",
         selection: "当前选区",
         copy: "复制",
         paste: "粘贴",
@@ -160,24 +149,19 @@ export const resources = {
         canvasScope: "整个画布",
         removeIsolated: "移除孤立单格",
         fillSingleHoles: "填补单格孔洞",
-        maskHint: "画笔和橡皮可手工补画或擦除. 批处理只处理明确的孤立格或四面封闭单格, 且可撤销.",
         palette: "已添加颜色",
         addColor: "添加颜色",
         addedColors: "可用于绘制的颜色",
         noAddedColors: "尚未添加颜色",
-        noAddedColorsHint: "请先从完整色卡中添加一种颜色.",
-        paletteEmptyHint: "添加颜色后, 才能用画笔、填充和形状工具绘制.",
         searchColors: "搜索色号或十六进制颜色",
         document: "文档设置",
         coordinates: "坐标",
         currentCode: "色号",
         occupied: "占用范围",
         beads: "拼豆数",
-        shortcutHint: "空格拖动平移 · 滚轮缩放 · Ctrl+Z 撤销",
       },
       colorPicker: {
         title: "添加颜色",
-        description: "从完整 MARD 色卡中选择颜色. 只有添加到当前颜色栏的颜色才能用于绘制.",
         search: "搜索色号、名称或十六进制颜色",
         available: "{{count}} 种可添加颜色",
         availableColors: "可添加的 MARD 颜色",
@@ -187,10 +171,7 @@ export const resources = {
         addAction: "添加所选颜色",
       },
       csv: {
-        importEyebrow: "CSV 导入",
         importTitle: "检查并导入图纸",
-        importDescription:
-          "读取仓库坐标矩阵或简单矩阵. 只有尺寸、行宽和所有色号通过校验后才会创建文档.",
         reading: "正在读取...",
         chooseFile: "选择 CSV 或 TSV",
         fileLimits: "UTF-8, 最大 8 MB, 最大 500 x 500 格.",
@@ -221,10 +202,7 @@ export const resources = {
         emptyTitle: "尚未选择文件",
         emptyDescription: "文件内容只在本地读取, 不会自动上传.",
         importAction: "导入并进入编辑器",
-        exportEyebrow: "CSV 导出",
         exportTitle: "导出可回读的矩阵",
-        exportDescription:
-          "导出前从文档快照生成 CSV, 随即回读并逐格比较, 避免保存损坏或错位的图纸.",
         exportEncoding: "UTF-8 with BOM / CRLF",
         includeCoordinates: "包含 1-based 行列坐标",
         roundTripPassed: "Round-trip 校验通过",
@@ -248,18 +226,13 @@ export const resources = {
       },
       image: {
         back: "返回启动页",
-        eyebrow: "图片转换",
-        title: "先理解结构, 再生成拼豆网格.",
-        description:
-          "处理始终在本机完成. 应用先生成去背景的高分辨率母图, 通过小波和聚类保留视觉结构, 最后才落到真实 MARD 色号.",
+        title: "图片转图纸",
         sourceTitle: "选择原图",
-        sourceDescription: "读取方向, 色彩模式, alpha 和像素规模.",
         chooseFile: "选择 PNG, JPEG 或 WebP",
         fileLimits: "最大 64 MB 和 3200 万像素.",
         dimensions: "原图尺寸",
         estimatedMemory: "处理内存",
         structureTitle: "整理背景与结构",
-        structureDescription: "在高分辨率阶段完成, 不直接缩成像素图.",
         backgroundMode: "背景处理",
         backgroundAuto: "边界感知自动去背景",
         backgroundPreserve: "保留原有 alpha",
@@ -267,7 +240,6 @@ export const resources = {
         backgroundTolerance: "背景颜色容差",
         waveletStrength: "小波纹理简化",
         patternTitle: "设置目标图纸",
-        patternDescription: "尺寸是最大占用范围, 实际网格按主体比例适配.",
         maximumColumns: "最大列数",
         maximumRows: "最大行数",
         colorCount: "最大颜色数",
@@ -284,7 +256,6 @@ export const resources = {
         process: "生成母图和图纸",
         desktopNote: "图片处理器通过桌面端 sidecar 运行. 浏览器预览模式只能检查界面.",
         previewTitle: "原图, 母图和图纸对比",
-        compare: "处理预览",
         validated: "本地校验通过",
         original: "原图",
         master: "高分辨率母图",
@@ -296,11 +267,6 @@ export const resources = {
         awaitingProcessing: "等待本地处理",
         masterDetail: "透明背景 · 结构和色块已整理",
         beadUnit: "颗",
-        pipelineTitle: "结构保真流水线",
-        pipelineBackground: "边界 Lab 聚类和连通 matte 去除背景, 内部相似颜色不会被直接抹除.",
-        pipelineWavelet: "两层 Haar 小波抑制纹理噪声, 再按边缘能量混回轮廓和关键结构.",
-        pipelineCluster: "高分辨率母图先在 Lab 空间聚类, 合并反光和无意义的小色差.",
-        pipelineRaster: "预乘 alpha 面积采样后再选择紧凑 MARD 子集, 禁止不存在的近似色号.",
         openEditor: "使用此结果进入编辑器",
         progress: {
           ready: "等待处理",
@@ -327,7 +293,6 @@ export const resources = {
       },
       codex: {
         title: "Codex 辅助分析",
-        description: "可选地让本机 Codex CLI 先为本地转换器制定受限参数计划.",
         experimental: "实验性, 默认关闭",
         statusChecking: "正在检测 Codex CLI...",
         statusReady: "{{version}} 可用",
@@ -361,10 +326,7 @@ export const resources = {
         },
       },
       export: {
-        eyebrow: "完整交付",
         title: "导出经过统一验证的交付包",
-        description:
-          "所有图片, CSV, 色号统计和元数据都从当前不可变快照生成. 任一验证失败都会阻止归档落盘.",
         immutableSnapshot: "单一文档快照 · 安全相对路径 · tar.gz",
         footprint: "占用范围",
         canvas: "完整画布",
@@ -403,10 +365,7 @@ export const resources = {
         },
       },
       pdf: {
-        eyebrow: "分板打印",
         title: "导出分页分板 PDF",
-        description:
-          "每块实体板生成一张 A4 页面, 标注全局行列坐标和真实 MARD 色号. 100% 打印时格距为 5.08 mm.",
         pageSummary: "{{pages}} 页, 每页一块板",
         scale: "打印比例",
         exporting: "正在生成 PDF...",
@@ -418,10 +377,7 @@ export const resources = {
         },
       },
       compare: {
-        eyebrow: "项目历史",
         title: "比较当前图纸与 CSV 版本",
-        description:
-          "参考版本按当前文档色卡严格解析. 叠层分别标出新增, 删除和改色格, 不修改当前图纸.",
         chooseFile: "选择参考 CSV",
         dimensionsMatch: "尺寸一致",
         dimensionsDiffer: "尺寸不同",
@@ -448,10 +404,6 @@ export const resources = {
       },
       status: {
         offline: "Offline first",
-        available: "Available",
-        foundationTitle: "Advanced editing, Codex, and native packages are ready",
-        foundationDescription:
-          "Selection transforms, symmetric drawing, board PDFs, and version comparison work offline while Codex remains optional.",
         nextStep: "Next step",
         planned: "Planned",
       },
@@ -474,27 +426,18 @@ export const resources = {
         system: "Follow system theme",
       },
       home: {
-        eyebrow: "Offline pattern workspace",
-        title: "Turn inspiration into patterns you can actually build.",
-        description:
-          "Start with an image, CSV, or blank canvas. Edit bead by bead with a real palette, verify material counts, and export a complete delivery package.",
-        workflow: "Create",
+        title: "Create or open a pattern",
         quickStart: "Choose a workflow",
-        actionHint: "Image, CSV, and blank-canvas workflows are available",
       },
       actions: {
         new: {
           title: "New blank pattern",
-          description: "Set the canvas, boards, and subdivisions, then place the first bead.",
         },
         image: {
           title: "Import image",
-          description: "Prepare a high-resolution master before rasterizing and mapping colors.",
         },
         csv: {
           title: "Import CSV",
-          description:
-            "Check dimensions and unknown color codes before editing an existing pattern.",
         },
       },
       preview: {
@@ -506,7 +449,6 @@ export const resources = {
         beads: "Beads",
       },
       recent: {
-        library: "Project library",
         title: "Recent projects",
         loading: "Loading recent projects",
         loadingDescription: "Reading project history from the system application-data folder.",
@@ -532,10 +474,7 @@ export const resources = {
         version: "Complete desktop workflow v1.0.0",
       },
       newPattern: {
-        eyebrow: "Blank pattern",
         title: "Set up a new canvas",
-        description:
-          "Set the canvas, physical board, and view subdivisions explicitly. These settings stay with the document.",
         name: "Pattern name",
         nameHint: "Use lowercase snake_case, for example flower_badge.",
         canvas: "Canvas size",
@@ -570,6 +509,12 @@ export const resources = {
         zoomIn: "Zoom in",
         zoomLevel: "Zoom level",
         fit: "Fit to window",
+        viewActions: "View and transform",
+        drawMode: "Draw",
+        previewMode: "Preview",
+        switchToDrawMode: "Switch to drawing mode",
+        switchToPreviewMode: "Switch to preview mode",
+        mirrorVerticalCenter: "Mirror across vertical center",
         export: "Export arrives in the next step",
         exportCsv: "Export CSV",
         exportPackage: "Complete export",
@@ -586,10 +531,7 @@ export const resources = {
         toolParameters: "Tool parameters",
         strokeWidth: "Grid width",
         filledShape: "Fill shape interior",
-        noToolParameters: "This tool has no additional parameters.",
         symmetryDrawing: "Symmetric drawing",
-        symmetryHint:
-          "Drawing and erasing are mirrored to the active axis before history is recorded.",
         selection: "Current selection",
         copy: "Copy",
         paste: "Paste",
@@ -604,26 +546,19 @@ export const resources = {
         canvasScope: "Whole canvas",
         removeIsolated: "Remove isolated cells",
         fillSingleHoles: "Fill single-cell holes",
-        maskHint:
-          "Use Brush and Eraser for manual mask edits. Batch actions only change isolated or four-sided single cells and remain undoable.",
         palette: "Added colors",
         addColor: "Add color",
         addedColors: "Colors available for drawing",
         noAddedColors: "No colors added",
-        noAddedColorsHint: "Add a color from the full palette first.",
-        paletteEmptyHint: "Add a color before drawing with Brush, Fill, or shape tools.",
         searchColors: "Search code or hex color",
         document: "Document settings",
         coordinates: "Coordinates",
         currentCode: "Color code",
         occupied: "Occupied bounds",
         beads: "Beads",
-        shortcutHint: "Space-drag to pan · Wheel to zoom · Ctrl+Z to undo",
       },
       colorPicker: {
         title: "Add color",
-        description:
-          "Choose from the full MARD palette. Only colors added to the current color bar can be used for drawing.",
         search: "Search code, name, or hex color",
         available: "{{count}} colors available to add",
         availableColors: "MARD colors available to add",
@@ -633,10 +568,7 @@ export const resources = {
         addAction: "Add selected color",
       },
       csv: {
-        importEyebrow: "CSV import",
         importTitle: "Validate and import a pattern",
-        importDescription:
-          "Read a repository coordinate matrix or a simple matrix. A document is created only after dimensions, row widths, and every color value pass validation.",
         reading: "Reading...",
         chooseFile: "Choose CSV or TSV",
         fileLimits: "UTF-8, up to 8 MB and 500 by 500 cells.",
@@ -668,10 +600,7 @@ export const resources = {
         emptyTitle: "No file selected",
         emptyDescription: "File contents are read locally and are never uploaded automatically.",
         importAction: "Import and open editor",
-        exportEyebrow: "CSV export",
         exportTitle: "Export a verifiable matrix",
-        exportDescription:
-          "Generate CSV from a document snapshot, immediately parse it again, and compare every cell before allowing it to be saved.",
         exportEncoding: "UTF-8 with BOM / CRLF",
         includeCoordinates: "Include 1-based row and column coordinates",
         roundTripPassed: "Round-trip validation passed",
@@ -697,18 +626,13 @@ export const resources = {
       },
       image: {
         back: "Back to start",
-        eyebrow: "Image conversion",
-        title: "Understand the structure before building the bead grid.",
-        description:
-          "Processing stays on this device. The app prepares a transparent high-resolution master, preserves visual structure with wavelets and clustering, and only then maps the result to real MARD codes.",
+        title: "Image to pattern",
         sourceTitle: "Choose source image",
-        sourceDescription: "Inspect orientation, color mode, alpha, and pixel scale.",
         chooseFile: "Choose PNG, JPEG, or WebP",
         fileLimits: "Up to 64 MB and 32 megapixels.",
         dimensions: "Source dimensions",
         estimatedMemory: "Working memory",
         structureTitle: "Prepare background and structure",
-        structureDescription: "Runs at high resolution before any bead rasterization.",
         backgroundMode: "Background handling",
         backgroundAuto: "Boundary-aware automatic removal",
         backgroundPreserve: "Preserve existing alpha",
@@ -716,8 +640,6 @@ export const resources = {
         backgroundTolerance: "Background color tolerance",
         waveletStrength: "Wavelet texture simplification",
         patternTitle: "Configure target pattern",
-        patternDescription:
-          "Dimensions are maximum occupied bounds; the subject keeps its aspect ratio.",
         maximumColumns: "Maximum columns",
         maximumRows: "Maximum rows",
         colorCount: "Maximum colors",
@@ -735,7 +657,6 @@ export const resources = {
         desktopNote:
           "The image processor runs as a desktop sidecar. Browser preview mode only shows the interface.",
         previewTitle: "Compare source, master, and pattern",
-        compare: "Processing preview",
         validated: "Local validation passed",
         original: "Source",
         master: "High-resolution master",
@@ -747,15 +668,6 @@ export const resources = {
         awaitingProcessing: "Waiting for local processing",
         masterDetail: "Transparent background · structure and color fields prepared",
         beadUnit: "beads",
-        pipelineTitle: "Structure-preserving pipeline",
-        pipelineBackground:
-          "Border Lab clustering and a connected matte remove the background without erasing isolated interior colors.",
-        pipelineWavelet:
-          "A two-level Haar transform suppresses texture, then edge energy blends back contours and key structures.",
-        pipelineCluster:
-          "The high-resolution master is clustered in Lab to merge reflections and meaningless micro-variations.",
-        pipelineRaster:
-          "Premultiplied-alpha area sampling precedes compact MARD subset selection; invented color codes are never allowed.",
         openEditor: "Open this result in the editor",
         progress: {
           ready: "Ready to process",
@@ -783,8 +695,6 @@ export const resources = {
       },
       codex: {
         title: "Codex-assisted analysis",
-        description:
-          "Optionally ask the local Codex CLI to prepare a bounded parameter plan for the local converter.",
         experimental: "Experimental and off by default",
         statusChecking: "Detecting Codex CLI...",
         statusReady: "{{version}} available",
@@ -824,10 +734,7 @@ export const resources = {
         },
       },
       export: {
-        eyebrow: "Complete delivery",
         title: "Export a uniformly validated package",
-        description:
-          "Every image, CSV, inventory, and metadata file comes from the same immutable snapshot. Any failed check prevents an incomplete archive from being written.",
         immutableSnapshot: "Single document snapshot · safe relative paths · tar.gz",
         footprint: "Occupied bounds",
         canvas: "Full canvas",
@@ -867,10 +774,7 @@ export const resources = {
         },
       },
       pdf: {
-        eyebrow: "Board printing",
         title: "Export a paginated board PDF",
-        description:
-          "Create one A4 page per physical board with global coordinates and real MARD codes. At 100% print scale, the cell pitch is 5.08 mm.",
         pageSummary: "{{pages}} pages, one board per page",
         scale: "Print scale",
         exporting: "Generating PDF...",
@@ -883,10 +787,7 @@ export const resources = {
         },
       },
       compare: {
-        eyebrow: "Project history",
         title: "Compare the current pattern with a CSV version",
-        description:
-          "The reference uses the current palette strictly. The overlay marks added, removed, and recolored cells without changing the current pattern.",
         chooseFile: "Choose reference CSV",
         dimensionsMatch: "Dimensions match",
         dimensionsDiffer: "Dimensions differ",

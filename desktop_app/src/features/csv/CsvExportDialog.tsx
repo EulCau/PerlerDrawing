@@ -96,7 +96,6 @@ export function CsvExportDialog({
   return (
     <div className="dialog-backdrop" role="presentation">
       <section
-        aria-describedby="csv-export-description"
         aria-labelledby="csv-export-title"
         aria-modal="true"
         className="csv-dialog csv-export-dialog"
@@ -106,9 +105,7 @@ export function CsvExportDialog({
       >
         <div className="new-pattern-dialog__heading">
           <div>
-            <span className="section-heading__eyebrow">{t("csv.exportEyebrow")}</span>
             <h2 id="csv-export-title">{t("csv.exportTitle")}</h2>
-            <p id="csv-export-description">{t("csv.exportDescription")}</p>
           </div>
           <button
             aria-label={t("common.close")}

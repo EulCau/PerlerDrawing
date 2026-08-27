@@ -52,9 +52,8 @@ export function AddColorDialog({
       >
         <div className="new-pattern-dialog__heading">
           <div>
-            <span className="section-heading__eyebrow">{palette.name}</span>
             <h2 id="add-color-title">{t("colorPicker.title")}</h2>
-            <p>{t("colorPicker.description")}</p>
+            <p className="dialog-context">{palette.name}</p>
           </div>
           <button
             aria-label={t("common.close")}

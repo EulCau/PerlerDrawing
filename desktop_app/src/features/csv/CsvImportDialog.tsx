@@ -131,7 +131,6 @@ export function CsvImportDialog({ onCancel, onImport }: CsvImportDialogProps) {
   return (
     <div className="dialog-backdrop" role="presentation">
       <section
-        aria-describedby="csv-import-description"
         aria-labelledby="csv-import-title"
         aria-modal="true"
         className="csv-dialog"
@@ -141,9 +140,7 @@ export function CsvImportDialog({ onCancel, onImport }: CsvImportDialogProps) {
       >
         <div className="new-pattern-dialog__heading">
           <div>
-            <span className="section-heading__eyebrow">{t("csv.importEyebrow")}</span>
             <h2 id="csv-import-title">{t("csv.importTitle")}</h2>
-            <p id="csv-import-description">{t("csv.importDescription")}</p>
           </div>
           <button
             aria-label={t("common.close")}

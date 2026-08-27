@@ -35,22 +35,12 @@ function recentPreviewUrl(project: RecentProject): string | undefined {
 interface ActionCardProps {
   icon: ReactNode;
   title: string;
-  description: string;
   accent: "violet" | "mint" | "peach";
-  statusLabel: string;
   disabled?: boolean;
   onClick?: () => void;
 }
 
-function ActionCard({
-  icon,
-  title,
-  description,
-  accent,
-  statusLabel,
-  disabled = false,
-  onClick,
-}: ActionCardProps) {
+function ActionCard({ icon, title, accent, disabled = false, onClick }: ActionCardProps) {
   return (
     <button
       className="action-card"
@@ -62,9 +52,7 @@ function ActionCard({
       <span className="action-card__icon">{icon}</span>
       <span className="action-card__content">
         <strong>{title}</strong>
-        <span>{description}</span>
       </span>
-      <span className="action-card__status">{statusLabel}</span>
       <ArrowIcon className="action-card__arrow" />
     </button>
   );
@@ -185,23 +173,7 @@ export function StartPage({
       <main className="start-page">
         <section className="hero" aria-labelledby="hero-title">
           <div className="hero__copy">
-            <div className="eyebrow">
-              <span className="eyebrow__icon" aria-hidden="true">
-                ✦
-              </span>
-              {t("home.eyebrow")}
-            </div>
             <h1 id="hero-title">{t("home.title")}</h1>
-            <p>{t("home.description")}</p>
-            <div className="foundation-status" role="status">
-              <span className="foundation-status__check" aria-hidden="true">
-                ✓
-              </span>
-              <span>
-                <strong>{t("status.foundationTitle")}</strong>
-                {t("status.foundationDescription")}
-              </span>
-            </div>
           </div>
 
           <div className="workspace-preview" aria-label={t("preview.label")}>
@@ -256,36 +228,26 @@ export function StartPage({
 
         <section className="quick-start" aria-labelledby="quick-start-title">
           <div className="section-heading">
-            <div>
-              <span className="section-heading__eyebrow">{t("home.workflow")}</span>
-              <h2 id="quick-start-title">{t("home.quickStart")}</h2>
-            </div>
-            <span className="section-heading__hint">{t("home.actionHint")}</span>
+            <h2 id="quick-start-title">{t("home.quickStart")}</h2>
           </div>
 
           <div className="action-grid">
             <ActionCard
               accent="violet"
-              description={t("actions.new.description")}
               icon={<PlusIcon />}
               onClick={onCreateBlank}
-              statusLabel={t("status.available")}
               title={t("actions.new.title")}
             />
             <ActionCard
               accent="mint"
-              description={t("actions.image.description")}
               icon={<ImageIcon />}
               onClick={onImportImage}
               title={t("actions.image.title")}
-              statusLabel={t("status.available")}
             />
             <ActionCard
               accent="peach"
-              description={t("actions.csv.description")}
               icon={<TableIcon />}
               onClick={onImportCsv}
-              statusLabel={t("status.available")}
               title={t("actions.csv.title")}
             />
           </div>
@@ -293,10 +255,7 @@ export function StartPage({
 
         <section className="recent-projects" aria-labelledby="recent-title">
           <div className="section-heading">
-            <div>
-              <span className="section-heading__eyebrow">{t("recent.library")}</span>
-              <h2 id="recent-title">{t("recent.title")}</h2>
-            </div>
+            <h2 id="recent-title">{t("recent.title")}</h2>
             <button
               className="button button--secondary recent-projects__open"
               disabled={openingProject}

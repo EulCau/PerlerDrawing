@@ -32,8 +32,10 @@ import {
   FitIcon,
   HandIcon,
   LineIcon,
+  MirrorIcon,
   MoonIcon,
   PlusIcon,
+  PreviewIcon,
   RectangleIcon,
   RedoIcon,
   SelectionIcon,
@@ -46,6 +48,7 @@ import {
   ZoomInIcon,
   ZoomOutIcon,
 } from "../../components/Icons";
+import type { CanvasDisplayMode } from "../../editor/canvas/render-canvas";
 import { createGridPatchCommand } from "../../editor/commands/grid-patch-command";
 import { createSymmetryCommand } from "../../editor/commands/symmetry-command";
 import type { PatternGrid } from "../../editor/model/grid";
@@ -69,6 +72,7 @@ import {
   fillSingleCellMaskHoles,
   removeIsolatedMaskCells,
 } from "../../editor/tools/mask-correction";
+import { createVerticalMirrorChanges } from "../../editor/tools/mirror";
 import { PatternCanvas, type PatternCanvasHandle } from "./PatternCanvas";
 import { AddColorDialog } from "./AddColorDialog";
 import { CsvExportDialog } from "../csv/CsvExportDialog";
@@ -214,6 +218,7 @@ export function EditorPage({
   const canvasRef = useRef<PatternCanvasHandle>(null);
   const [cursor, setCursor] = useState<GridPoint | null>(null);
   const [zoom, setZoom] = useState(100);
+  const [displayMode, setDisplayMode] = useState<CanvasDisplayMode>("draw");
   const [showAddColor, setShowAddColor] = useState(false);
   const [showCsvExport, setShowCsvExport] = useState(false);
   const [showCompleteExport, setShowCompleteExport] = useState(false);
@@ -337,6 +342,17 @@ export function EditorPage({
     [document, executeCommand, selection],
   );
 
+  const mirrorAcrossVerticalCenter = useCallback(() => {
+    if (!document) return;
+    executeCommand(
+      createGridPatchCommand(
+        document,
+        "Mirror pattern across vertical center",
+        createVerticalMirrorChanges(document.grid),
+      ),
+    );
+  }, [document, executeCommand]);
+
   useEffect(() => {
     const handleSaveShortcut = (event: globalThis.KeyboardEvent) => {
       if (!(event.ctrlKey || event.metaKey) || event.key.toLocaleLowerCase() !== "s") return;
@@ -420,6 +436,38 @@ export function EditorPage({
             type="button"
           >
             <FitIcon />
+          </button>
+        </div>
+        <div className="editor-topbar__group" aria-label={t("editor.viewActions")}>
+          <button
+            aria-label={
+              displayMode === "preview"
+                ? t("editor.switchToDrawMode")
+                : t("editor.switchToPreviewMode")
+            }
+            aria-pressed={displayMode === "preview"}
+            className="button editor-view-action"
+            onClick={() => setDisplayMode((current) => (current === "draw" ? "preview" : "draw"))}
+            title={
+              displayMode === "preview"
+                ? t("editor.switchToDrawMode")
+                : t("editor.switchToPreviewMode")
+            }
+            type="button"
+          >
+            {displayMode === "preview" ? <BrushIcon /> : <PreviewIcon />}
+            <span>
+              {displayMode === "preview" ? t("editor.drawMode") : t("editor.previewMode")}
+            </span>
+          </button>
+          <button
+            aria-label={t("editor.mirrorVerticalCenter")}
+            className="icon-button"
+            onClick={mirrorAcrossVerticalCenter}
+            title={t("editor.mirrorVerticalCenter")}
+            type="button"
+          >
+            <MirrorIcon />
           </button>
         </div>
         <div className="editor-topbar__spacer" />
@@ -508,6 +556,7 @@ export function EditorPage({
 
         <section className="canvas-stage" aria-label={t("editor.canvasRegion")}>
           <PatternCanvas
+            displayMode={displayMode}
             document={document}
             onCursorChange={setCursor}
             onExecute={executeCommand}
@@ -567,7 +616,6 @@ export function EditorPage({
             ) : (
               <div className="current-color-empty">
                 <strong>{t("editor.noAddedColors")}</strong>
-                <span>{t("editor.noAddedColorsHint")}</span>
               </div>
             )}
           </section>
@@ -596,7 +644,6 @@ export function EditorPage({
               <option value="horizontal">{t("image.symmetryHorizontal")}</option>
               <option value="central">{t("image.symmetryCentral")}</option>
             </select>
-            <p className="inspector-note inspector-note--spaced">{t("editor.symmetryHint")}</p>
           </section>
 
           {selection ? (
@@ -644,41 +691,40 @@ export function EditorPage({
                 {t("editor.fillSingleHoles")}
               </button>
             </div>
-            <p className="inspector-note inspector-note--spaced">{t("editor.maskHint")}</p>
           </section>
 
-          <section className="inspector-section">
-            <div className="inspector-heading">
-              <span>{t("editor.toolParameters")}</span>
-              <strong>{t(`tools.${activeTool}`)}</strong>
-            </div>
-            {usesStroke ? (
-              <label className="parameter-row">
-                <span>{t("editor.strokeWidth")}</span>
-                <input
-                  aria-label={t("editor.strokeWidth")}
-                  max="12"
-                  min="1"
-                  onChange={(event) => setStrokeWidth(Number.parseInt(event.target.value, 10))}
-                  type="range"
-                  value={strokeWidth}
-                />
-                <output>{strokeWidth}</output>
-              </label>
-            ) : (
-              <p className="inspector-note">{t("editor.noToolParameters")}</p>
-            )}
-            {usesFillOption ? (
-              <label className="checkbox-row">
-                <input
-                  checked={shapeFilled}
-                  onChange={(event) => setShapeFilled(event.target.checked)}
-                  type="checkbox"
-                />
-                <span>{t("editor.filledShape")}</span>
-              </label>
-            ) : null}
-          </section>
+          {usesStroke || usesFillOption ? (
+            <section className="inspector-section">
+              <div className="inspector-heading">
+                <span>{t("editor.toolParameters")}</span>
+                <strong>{t(`tools.${activeTool}`)}</strong>
+              </div>
+              {usesStroke ? (
+                <label className="parameter-row">
+                  <span>{t("editor.strokeWidth")}</span>
+                  <input
+                    aria-label={t("editor.strokeWidth")}
+                    max="12"
+                    min="1"
+                    onChange={(event) => setStrokeWidth(Number.parseInt(event.target.value, 10))}
+                    type="range"
+                    value={strokeWidth}
+                  />
+                  <output>{strokeWidth}</output>
+                </label>
+              ) : null}
+              {usesFillOption ? (
+                <label className="checkbox-row">
+                  <input
+                    checked={shapeFilled}
+                    onChange={(event) => setShapeFilled(event.target.checked)}
+                    type="checkbox"
+                  />
+                  <span>{t("editor.filledShape")}</span>
+                </label>
+              ) : null}
+            </section>
+          ) : null}
 
           <section className="inspector-section inspector-section--palette">
             <div className="inspector-heading">
@@ -717,7 +763,6 @@ export function EditorPage({
             ) : (
               <div className="palette-empty-state">
                 <strong>{t("editor.noAddedColors")}</strong>
-                <span>{t("editor.paletteEmptyHint")}</span>
               </div>
             )}
           </section>
@@ -774,7 +819,6 @@ export function EditorPage({
         <span>
           {t("editor.beads")}: {bounds?.beadCount ?? 0}
         </span>
-        <span className="editor-statusbar__hint">{t("editor.shortcutHint")}</span>
       </footer>
       {showCsvExport ? (
         <CsvExportDialog

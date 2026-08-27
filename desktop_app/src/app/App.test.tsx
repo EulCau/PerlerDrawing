@@ -2,6 +2,8 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import i18n from "../i18n/config";
+import { createGridPatchCommand } from "../editor/commands/grid-patch-command";
+import { EMPTY_CELL } from "../editor/model/grid";
 import { documentStore } from "./document-store";
 import { editorStore } from "./editor-store";
 import { useSettingsStore } from "./settings-store";
@@ -22,13 +24,13 @@ describe("application preferences", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: "把灵感变成可实际拼制的图纸." })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "新建或打开图纸" })).toBeVisible();
     await user.click(screen.getByRole("radio", { name: "Use English" }));
 
     await waitFor(() => {
       expect(
         screen.getByRole("heading", {
-          name: "Turn inspiration into patterns you can actually build.",
+          name: "Create or open a pattern",
         }),
       ).toBeVisible();
     });
@@ -111,8 +113,51 @@ describe("application preferences", () => {
 
     await user.click(screen.getByRole("button", { name: /导入图片/ }));
 
-    expect(screen.getByRole("heading", { name: "先理解结构, 再生成拼豆网格." })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "图片转图纸" })).toBeVisible();
     expect(screen.getByText("原图, 母图和图纸对比")).toBeVisible();
+  });
+
+  it("switches between bead drawing and full-cell preview modes", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /新建空白图纸/ }));
+    await user.click(screen.getByRole("button", { name: "创建并进入编辑器" }));
+
+    const canvas = screen.getByLabelText("29 列 × 29 行的可编辑拼豆画布");
+    expect(canvas).toHaveAttribute("data-mode", "draw");
+    await user.click(screen.getByRole("button", { name: "切换到预览模式" }));
+    expect(canvas).toHaveAttribute("data-mode", "preview");
+    expect(screen.getByRole("button", { name: "切换到绘制模式" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  it("mirrors the whole pattern across the vertical center and keeps it undoable", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /新建空白图纸/ }));
+    await user.click(screen.getByRole("button", { name: "创建并进入编辑器" }));
+
+    const pattern = documentStore.getState().document;
+    expect(pattern).not.toBeNull();
+    if (!pattern) return;
+    documentStore.getState().executeCommand(
+      createGridPatchCommand(pattern, "Seed mirror test", [
+        { row: 0, column: 0, value: 0 },
+        { row: 0, column: 2, value: 1 },
+      ]),
+    );
+
+    await user.click(screen.getByRole("button", { name: "沿竖直中心线镜像" }));
+    expect(pattern.grid.cells[0]).toBe(EMPTY_CELL);
+    expect(pattern.grid.cells[2]).toBe(EMPTY_CELL);
+    expect(pattern.grid.cells[26]).toBe(1);
+    expect(pattern.grid.cells[28]).toBe(0);
+
+    documentStore.getState().undo();
+    expect(pattern.grid.cells[0]).toBe(0);
+    expect(pattern.grid.cells[2]).toBe(1);
   });
 
   it("validates an editor snapshot before enabling CSV save", async () => {

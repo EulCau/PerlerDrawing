@@ -425,9 +425,7 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
           {t("image.back")}
         </button>
         <div>
-          <span className="section-heading__eyebrow">{t("image.eyebrow")}</span>
           <h1>{t("image.title")}</h1>
-          <p>{t("image.description")}</p>
         </div>
         <span className="offline-badge">
           <span aria-hidden="true" className="offline-badge__dot" />
@@ -446,7 +444,6 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
               <span>01</span>
               <div>
                 <strong>{t("image.sourceTitle")}</strong>
-                <small>{t("image.sourceDescription")}</small>
               </div>
             </div>
             <button className="image-file-picker" onClick={() => void chooseFile()} type="button">
@@ -481,7 +478,6 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
               <span>02</span>
               <div>
                 <strong>{t("image.structureTitle")}</strong>
-                <small>{t("image.structureDescription")}</small>
               </div>
             </div>
             <label className="form-field">
@@ -532,7 +528,6 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
               <span>03</span>
               <div>
                 <strong>{t("image.patternTitle")}</strong>
-                <small>{t("image.patternDescription")}</small>
               </div>
             </div>
             <label className="form-field">
@@ -627,7 +622,6 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
               <span>04</span>
               <div>
                 <strong>{t("codex.title")}</strong>
-                <small>{t("codex.description")}</small>
               </div>
             </div>
             <div className="codex-status-row">
@@ -749,10 +743,7 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
 
         <section className="image-preview-panel" aria-label={t("image.previewTitle")}>
           <div className="image-preview-heading">
-            <div>
-              <span className="section-heading__eyebrow">{t("image.compare")}</span>
-              <h2>{t("image.previewTitle")}</h2>
-            </div>
+            <h2>{t("image.previewTitle")}</h2>
             {processed ? (
               <span className="validation-chip">
                 <CheckIcon />
@@ -809,15 +800,6 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
               </figcaption>
             </figure>
           </div>
-          <div className="image-pipeline-note">
-            <strong>{t("image.pipelineTitle")}</strong>
-            <ol>
-              <li>{t("image.pipelineBackground")}</li>
-              <li>{t("image.pipelineWavelet")}</li>
-              <li>{t("image.pipelineCluster")}</li>
-              <li>{t("image.pipelineRaster")}</li>
-            </ol>
-          </div>
           <button
             className="button button--primary image-open-editor"
             disabled={!processed}
@@ -840,7 +822,6 @@ export function ImageImportPage({ onBack, onImport }: ImageImportPageProps) {
           >
             <div className="new-pattern-dialog__heading">
               <div>
-                <span className="section-heading__eyebrow">{t("codex.experimental")}</span>
                 <h2 id="codex-consent-title">{t("codex.consentTitle")}</h2>
                 <p>{t("codex.consentDescription")}</p>
               </div>

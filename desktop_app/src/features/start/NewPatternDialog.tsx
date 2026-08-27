@@ -80,7 +80,6 @@ export function NewPatternDialog({ onCancel, onCreate }: NewPatternDialogProps) 
   return (
     <div className="dialog-backdrop" role="presentation">
       <section
-        aria-describedby="new-pattern-description"
         aria-labelledby="new-pattern-title"
         aria-modal="true"
         className="new-pattern-dialog"
@@ -90,9 +89,7 @@ export function NewPatternDialog({ onCancel, onCreate }: NewPatternDialogProps) 
       >
         <div className="new-pattern-dialog__heading">
           <div>
-            <span className="section-heading__eyebrow">{t("newPattern.eyebrow")}</span>
             <h2 id="new-pattern-title">{t("newPattern.title")}</h2>
-            <p id="new-pattern-description">{t("newPattern.description")}</p>
           </div>
           <button
             aria-label={t("common.close")}
